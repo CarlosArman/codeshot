@@ -62,7 +62,7 @@ La solución combina:
 - Controles de apariencia: fondo, padding, radio de borde, sombra, números de línea, marca de agua.
 - Exportación a PNG en alta resolución (`html2canvas`), con soporte de transparencia real.
 
-🔗 **App web**: [`codeshot-web/index.html`](./codeshot-web/index.html)
+🔗 **App web**: [`codeshot-web/index.html`](./codeshot-web/index.html) — 🚀 Demo en vivo: **https://carlosarman.github.io/codeshot/**
 🔗 **Extensión de Chrome**: [`codeshot-web/`](./codeshot-web) + [`extension/codeshot-chrome-extension.zip`](./extension/codeshot-chrome-extension.zip)
 🔗 **Extensión de VS Code**: [`codeshot-vscode/`](./codeshot-vscode) + [`extension/codeshot-vscode-extension.vsix`](./extension/codeshot-vscode-extension.vsix)
 
@@ -154,8 +154,11 @@ No se requiere build, servidor, ni conexión a internet en ningún caso.
 
 ---
 
-## 🌐 Instalar la app web
+## 🌐 Usar la app web
 
+**Demo en vivo** (sin instalar nada): **https://carlosarman.github.io/codeshot/**
+
+O ejecútala localmente:
 1. Abre `codeshot-web/index.html` en tu navegador (doble clic, o `Archivo → Abrir`).
 2. Escribe o pega tu código, ajusta el estilo en el panel lateral.
 3. Haz clic en **"Descargar PNG"**.

@@ -62,7 +62,7 @@ The solution combines:
 - Appearance controls: background, padding, border radius, shadow, line numbers, watermark.
 - High-resolution PNG export (`html2canvas`), with real transparency support.
 
-🔗 **Web app**: [`codeshot-web/index.html`](./codeshot-web/index.html)
+🔗 **Web app**: [`codeshot-web/index.html`](./codeshot-web/index.html) — 🚀 Live demo: **https://carlosarman.github.io/codeshot/**
 🔗 **Chrome extension**: [`codeshot-web/`](./codeshot-web) + [`extension/codeshot-chrome-extension.zip`](./extension/codeshot-chrome-extension.zip)
 🔗 **VS Code extension**: [`codeshot-vscode/`](./codeshot-vscode) + [`extension/codeshot-vscode-extension.vsix`](./extension/codeshot-vscode-extension.vsix)
 
@@ -154,8 +154,11 @@ No build, server, or internet connection is required in any case.
 
 ---
 
-## 🌐 Install the web app
+## 🌐 Use the web app
 
+**Live demo** (no installation needed): **https://carlosarman.github.io/codeshot/**
+
+Or run it locally:
 1. Open `codeshot-web/index.html` in your browser (double-click, or `File → Open`).
 2. Write or paste your code, adjust the style in the side panel.
 3. Click **"Download PNG"**.
