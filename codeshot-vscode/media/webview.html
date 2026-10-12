@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src {{cspSource}} data: blob:; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}}; connect-src {{cspSource}};" />
+<base href="{{baseUri}}/" />
+<title>CodeShot — Capturas de código elegantes</title>
+<link rel="icon" type="image/png" href="favicon.png" />
+<link rel="stylesheet" href="vendor/prism/themes/prism-tomorrow.min.css" id="prismThemeLink" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <a href="#codeInput" class="skip-link">Saltar al editor de código</a>
+
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-icon" aria-hidden="true">📸</span>
+      <h1>Code<span class="brand-sub">Shot</span></h1>
+    </div>
+    <div class="header-actions">
+      <button id="themeToggleBtn" class="btn-icon btn-theme-toggle" type="button" aria-label="Cambiar a tema claro" title="Cambiar tema claro/oscuro">
+        <span id="themeIcon" aria-hidden="true">🌙</span>
+      </button>
+      <button id="downloadBtn" class="btn btn-primary" type="button">
+        <span aria-hidden="true">⬇</span> Descargar PNG
+      </button>
+    </div>
+  </header>
+
+  <output id="downloadStatus" class="sr-only" aria-live="polite"></output>
+
+  <main class="app-main">
+
+    <button id="sidebarToggleBtn" class="sidebar-toggle" type="button" aria-label="Contraer panel de configuración" aria-expanded="true" aria-controls="controlsPanel">
+      <span class="sidebar-toggle-icon" aria-hidden="true">‹</span>
+    </button>
+
+    <aside class="controls-panel" id="controlsPanel" aria-label="Panel de configuración">
+
+      <section class="control-group" aria-labelledby="group-ventana">
+        <h2 id="group-ventana">Ventana</h2>
+        <label for="frameStyle">Estilo de marco</label>
+        <select id="frameStyle">
+          <option value="mac">macOS</option>
+          <option value="windows">Windows</option>
+          <option value="browser">Navegador</option>
+          <option value="ubuntu">Ubuntu / Linux</option>
+          <option value="none">Sin marco</option>
+        </select>
+
+        <label for="windowTitle">Título de la ventana</label>
+        <input type="text" id="windowTitle" value="untitled.js" autocomplete="off" />
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="showTitlebar" checked />
+          Mostrar barra de título
+        </label>
+      </section>
+
+      <section class="control-group" aria-labelledby="group-codigo">
+        <h2 id="group-codigo">Código</h2>
+        <p class="hint-text" id="codeHint">
+          <span aria-hidden="true">💡</span>
+          Escribe o pega tu código directamente en el editor de la vista previa.
+        </p>
+        <button id="clearCodeBtn" class="btn btn-secondary" type="button">
+          <span aria-hidden="true">🗑</span> Limpiar código
+        </button>
+
+        <label for="language">Lenguaje</label>
+        <select id="language">
+          <option value="javascript">JavaScript</option>
+          <option value="typescript">TypeScript</option>
+          <option value="jsx">JSX</option>
+          <option value="python">Python</option>
+          <option value="java">Java</option>
+          <option value="csharp">C#</option>
+          <option value="cpp">C++</option>
+          <option value="c">C</option>
+          <option value="go">Go</option>
+          <option value="rust">Rust</option>
+          <option value="php">PHP</option>
+          <option value="ruby">Ruby</option>
+          <option value="markup">HTML</option>
+          <option value="css">CSS</option>
+          <option value="json">JSON</option>
+          <option value="bash">Bash</option>
+          <option value="sql">SQL</option>
+          <option value="yaml">YAML</option>
+          <option value="markdown">Markdown</option>
+        </select>
+
+        <label for="codeTheme">Tema del editor</label>
+        <select id="codeTheme">
+          <option value="tomorrow">Tomorrow Night</option>
+          <option value="okaidia">Okaidia</option>
+          <option value="dark">Dark</option>
+          <option value="twilight">Twilight</option>
+          <option value="funky">Funky</option>
+          <option value="default">Default (claro)</option>
+          <option value="coy">Coy (claro)</option>
+          <option value="solarizedlight">Solarized Light</option>
+          <option value="onelight">One Light (claro)</option>
+        </select>
+
+        <label for="fontSize">Tamaño de fuente: <span id="fontSizeVal">14</span>px</label>
+        <input type="range" id="fontSize" min="10" max="28" value="14"
+               aria-valuemin="10" aria-valuemax="28" aria-valuenow="14" aria-valuetext="14 píxeles" />
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="showLineNumbers" />
+          Números de línea
+        </label>
+      </section>
+
+      <section class="control-group" aria-labelledby="group-fondo">
+        <h2 id="group-fondo">Fondo</h2>
+        <span id="bgSwatchesLabel" class="swatches-group-label">Gradiente / color</span>
+        <div class="bg-swatches" id="bgSwatches" role="radiogroup" aria-labelledby="bgSwatchesLabel"></div>
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="customBgToggle" />
+          Color personalizado
+        </label>
+        <label for="customBgColor" class="sr-only">Selector de color personalizado para el fondo</label>
+        <input type="color" id="customBgColor" value="#6a11cb" disabled />
+      </section>
+
+      <section class="control-group" aria-labelledby="group-apariencia">
+        <h2 id="group-apariencia">Apariencia</h2>
+        <label for="padding">Padding del fondo: <span id="paddingVal">64</span>px</label>
+        <input type="range" id="padding" min="0" max="150" value="64"
+               aria-valuemin="0" aria-valuemax="150" aria-valuenow="64" aria-valuetext="64 píxeles" />
+
+        <label for="radius">Radio del borde: <span id="radiusVal">12</span>px</label>
+        <input type="range" id="radius" min="0" max="40" value="12"
+               aria-valuemin="0" aria-valuemax="40" aria-valuenow="12" aria-valuetext="12 píxeles" />
+
+        <label for="shadow">Intensidad de sombra: <span id="shadowVal">60</span>%</label>
+        <input type="range" id="shadow" min="0" max="100" value="60"
+               aria-valuemin="0" aria-valuemax="100" aria-valuenow="60" aria-valuetext="60 por ciento" />
+
+        <label class="checkbox-label">
+          <input type="checkbox" id="showWatermark" />
+          Marca de agua
+        </label>
+      </section>
+
+    </aside>
+
+    <section class="preview-area" aria-label="Vista previa del código">
+      <fieldset class="zoom-controls">
+        <legend class="sr-only">Controles de zoom de la vista previa</legend>
+        <button id="zoomOut" class="btn-icon" type="button" aria-label="Reducir zoom">−</button>
+        <span id="zoomVal" aria-live="polite">100%</span>
+        <button id="zoomIn" class="btn-icon" type="button" aria-label="Aumentar zoom">+</button>
+      </fieldset>
+
+      <div class="stage-wrapper">
+        <div id="exportStage" class="export-stage">
+          <div id="windowFrame" class="window-frame frame-mac">
+            <div id="titlebar" class="titlebar">
+              <div class="mac-dots" aria-hidden="true">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+              </div>
+              <div id="windowTitleText" class="window-title-text">untitled.js</div>
+              <div class="windows-controls" aria-hidden="true">
+                <span class="wctrl wctrl-min">—</span>
+                <span class="wctrl wctrl-max">▢</span>
+                <span class="wctrl wctrl-close">✕</span>
+              </div>
+            </div>
+
+            <div id="browserBar" class="browser-bar" aria-hidden="true">
+              <div class="browser-nav">
+                <span class="browser-arrow">←</span>
+                <span class="browser-arrow">→</span>
+                <span class="browser-arrow">⟳</span>
+              </div>
+              <div id="browserUrl" class="browser-url">
+                <span class="lock-icon" aria-hidden="true"></span>
+                <span id="browserUrlText">untitled.js</span>
+              </div>
+            </div>
+
+            <div class="code-area">
+              <div id="lineNumbers" class="line-numbers-col" aria-hidden="true"></div>
+              <div class="code-editor-wrapper">
+                <pre id="highlightPre" aria-hidden="true"><code id="highlightCode" class="language-javascript"></code></pre>
+                <label for="codeInput" class="sr-only">Editor de código: escribe o pega tu código aquí</label>
+                <textarea
+                  id="codeInput"
+                  class="code-input"
+                  spellcheck="false"
+                  wrap="off"
+                  autocapitalize="off"
+                  autocorrect="off"
+                  aria-describedby="codeHint"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+          <div id="watermark" class="watermark">Hecho con CodeShot</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="vendor/prism/prism.min.js"></script>
+  <script src="vendor/prism/components/prism-markup.min.js"></script>
+  <script src="vendor/prism/components/prism-css.min.js"></script>
+  <script src="vendor/prism/components/prism-clike.min.js"></script>
+  <script src="vendor/prism/components/prism-javascript.min.js"></script>
+  <script src="vendor/prism/components/prism-typescript.min.js"></script>
+  <script src="vendor/prism/components/prism-jsx.min.js"></script>
+  <script src="vendor/prism/components/prism-python.min.js"></script>
+  <script src="vendor/prism/components/prism-java.min.js"></script>
+  <script src="vendor/prism/components/prism-csharp.min.js"></script>
+  <script src="vendor/prism/components/prism-c.min.js"></script>
+  <script src="vendor/prism/components/prism-cpp.min.js"></script>
+  <script src="vendor/prism/components/prism-go.min.js"></script>
+  <script src="vendor/prism/components/prism-rust.min.js"></script>
+  <script src="vendor/prism/components/prism-markup-templating.min.js"></script>
+  <script src="vendor/prism/components/prism-php.min.js"></script>
+  <script src="vendor/prism/components/prism-ruby.min.js"></script>
+  <script src="vendor/prism/components/prism-json.min.js"></script>
+  <script src="vendor/prism/components/prism-bash.min.js"></script>
+  <script src="vendor/prism/components/prism-sql.min.js"></script>
+  <script src="vendor/prism/components/prism-yaml.min.js"></script>
+  <script src="vendor/prism/components/prism-markdown.min.js"></script>
+  <script src="vendor/html2canvas/html2canvas.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

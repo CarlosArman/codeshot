@@ -1,0 +1,77 @@
+{
+  "name": "codeshot",
+  "displayName": "CodeShot — Capturas de código elegantes",
+  "description": "Crea capturas de código elegantes con marcos de ventana, fondos degradados y temas de sintaxis, sin salir de VS Code.",
+  "version": "1.0.0",
+  "publisher": "codeshot",
+  "icon": "images/icon.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "codeshot",
+    "screenshot",
+    "code screenshot",
+    "captura de codigo",
+    "carbon"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codeshotActivityBar",
+          "title": "CodeShot",
+          "icon": "images/activitybar-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "codeshotActivityBar": [
+        {
+          "id": "codeshotSidebar",
+          "name": "CodeShot",
+          "type": "webview",
+          "icon": "images/activitybar-icon.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "codeshot.open",
+        "title": "CodeShot: Abrir editor de capturas",
+        "category": "CodeShot"
+      },
+      {
+        "command": "codeshot.openWithSelection",
+        "title": "CodeShot: Capturar selección actual",
+        "category": "CodeShot"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "codeshot.open"
+        },
+        {
+          "command": "codeshot.openWithSelection",
+          "when": "editorHasSelection"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "codeshot.openWithSelection",
+          "when": "editorHasSelection",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "echo \"No build step required\""
+  }
+}
