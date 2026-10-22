@@ -1,7 +1,7 @@
 # 📸 CodeShot
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.0.0-blueviolet" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-1.2.0-blueviolet" alt="Version" />
   <img src="https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white" alt="HTML5" />
   <img src="https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white" alt="CSS3" />
   <img src="https://img.shields.io/badge/JavaScript-Vanilla-F7DF1E?logo=javascript&logoColor=black" alt="JavaScript" />
@@ -74,9 +74,15 @@ La solución combina:
 
 - ✅ Resaltado de sintaxis en vivo con Prism.js (18+ lenguajes, 9 temas).
 - ✅ Cuatro marcos de ventana realistas + opción "sin marco".
+- ✅ Control de ancho del marco (400–1400 px) y selector de familia tipográfica.
 - ✅ Fondos degradados predefinidos o color personalizado.
-- ✅ Exportación a PNG en 2x con transparencia real.
-- ✅ Tema claro/oscuro de la interfaz, persistido en `localStorage`.
+- ✅ Exportación a **PNG** (transparencia real) o **JPEG** (calidad ajustable) en 1×/2×/3×.
+- ✅ Copiar imagen al portapapeles con un clic (`ClipboardItem` API).
+- ✅ Compartir por enlace y presets de estilo guardados (versión web).
+- ✅ Compartir en redes sociales: X/Twitter, WhatsApp, LinkedIn, Reddit, Facebook + Web Share API (selector nativo en móvil).
+- ✅ Persistencia completa de preferencias en `localStorage`.
+- ✅ Detección automática de lenguaje al pegar + drag & drop de archivos.
+- ✅ Tema claro/oscuro de la interfaz.
 
 ### Engineering Value
 
@@ -219,10 +225,11 @@ Además del panel independiente, CodeShot también agrega su propio icono a la *
 
 ### Comandos disponibles
 
-| Comando | Descripción |
-|---|---|
-| `CodeShot: Abrir editor de capturas` | Abre el panel de CodeShot vacío. |
-| `CodeShot: Capturar selección actual` | Abre el panel con el texto seleccionado en el editor activo, detectando automáticamente el lenguaje y el nombre de archivo. También disponible en el menú contextual al hacer clic derecho sobre una selección. |
+| Comando | Atajo | Descripción |
+|---|---|---|
+| `CodeShot: Abrir editor de capturas` | — | Abre el panel de CodeShot vacío. |
+| `CodeShot: Capturar selección actual` | `Ctrl+Shift+S` | Abre el panel con el texto seleccionado; detecta lenguaje y nombre de archivo automáticamente. También disponible en el menú contextual. |
+| `CodeShot: Capturar archivo completo` | `Ctrl+Shift+Alt+S` | Carga todo el archivo activo en el panel de CodeShot. |
 
 Al exportar, la extensión usa el diálogo nativo **"Guardar como"** de VS Code, ya que los webviews no tienen acceso directo al sistema de archivos.
 
@@ -249,9 +256,8 @@ CodeShot sigue una arquitectura **vanilla JS por capas**, sin build step:
 
 - [ ] Publicar la extensión en la Chrome Web Store.
 - [ ] Publicar la extensión en el VS Code Marketplace.
-- [ ] Agregar más temas de fondo y marcos de ventana (p. ej. macOS Big Sur, GNOME moderno).
-- [ ] Soporte de arrastrar y soltar archivos de código directamente al editor.
-- [ ] Historial local de capturas generadas.
+- [x] Historial local de capturas generadas.
+- [x] Exportación a múltiples resoluciones en un único archivo ZIP.
 
 ---
 

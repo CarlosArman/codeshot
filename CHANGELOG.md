@@ -11,17 +11,78 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### ✨ Added
-
-- **VS Code Activity Bar view**: CodeShot now also appears as its own icon in VS Code's Activity Bar (left sidebar), opening an integrated webview with the same editor as the standalone panel. Both surfaces share the same HTML-building and message-handling logic (`ready`, `loadSelection`, `saveImage`).
-
 ### 🗺️ Planned
 
 - Publish the extension on the Chrome Web Store.
 - Publish the extension on the VS Code Marketplace.
-- Additional background themes and window frames.
-- Support for dragging and dropping code files directly into the editor.
-- Local history of generated screenshots.
+
+---
+
+## [1.2.0] - 2026-10-22
+
+### ✨ Added
+
+- **Social media sharing dropdown** (web version): the "🔗 Share" button now opens a dropdown with:
+  - **"Share image"** button — uses the Web Share API (`navigator.share({ files: [...] })`) to open the OS native share sheet (WhatsApp, Instagram, Telegram, etc.) on mobile; falls back to downloading the image on desktop.
+  - **"Copy link"** button — copies the serialized state URL to the clipboard (same as before).
+  - **Social network buttons** with official SVG icons: **X / Twitter**, **WhatsApp**, **LinkedIn**, **Reddit**, **Facebook** — open the respective share dialog in a popup window with the state URL.
+- **Style presets** in the VS Code extension: the sidebar now includes a "Style presets" section identical to the web version — save the current visual configuration (language, theme, font, frame, background, etc.) with a custom name and restore it with one click; persisted in `localStorage`.
+
+### 🔄 Changed
+
+- **Improved scrollbar design** (web + VS Code): all scrollable elements now use a consistent, polished scrollbar — 6 px slim with rounded thumb, floating effect (`background-clip: content-box`), accent color on hover, and Firefox support (`scrollbar-width: thin`). Applies to: controls panel, history list, preview area.
+- **Fixed textarea scrollbar**: `overflow: hidden` added to `.code-input` and `overflow: visible` removed from the shared `pre, textarea` rule, eliminating the unexpected scrollbar that appeared in the code editor area.
+- **Extension version** bumped to `1.2.0`.
+
+### 🐛 Fixed
+
+- **SonarQube — duplicate selector**: `scrollbar-width`/`scrollbar-color` (Firefox) merged into the main `.controls-panel` block to eliminate the duplicate selector warning in both `codeshot-web/style.css` and `codeshot-vscode/media/style.css`.
+- **SonarQube — Cognitive Complexity**: `applyPresetState` in the VS Code extension refactored from CC 48 to CC ≤ 15 by decomposing into `applyPresetEditorStateVSC`, `applyPresetFrameStateVSC`, `applyPresetAppearanceVSC` (with sub-functions `applyPresetPaddingVSC`, `applyPresetRadiusVSC`, `applyPresetShadowVSC`), and `applyPresetBgStateVSC`.
+- **SonarQube — Cognitive Complexity**: `shareImageBtn` click handler refactored from CC 18 to CC ≤ 15 by extracting `handleShareImageBlob(blob, filename)`.
+- **SonarQube — optional chaining**: `navigator.canShare && navigator.canShare(...)` replaced with `navigator.canShare?.()`.
+
+---
+
+## [1.1.0] - 2026-10-22
+
+### ✨ Added
+
+- **Local history of generated screenshots** (web version): the last 8 exported images are saved in `localStorage` as thumbnails; each entry can be re-downloaded with one click. The history is cleared with the "Clear history" button.
+- **Multi-resolution ZIP export** (web version): the "Export ZIP" button generates a `.zip` file containing three PNG files at 1×, 2×, and 3× scales simultaneously, built with a pure-JS ZIP implementation (no external libraries).
+- **"Copy image" button** in the header: copies the screenshot directly to the clipboard using the `ClipboardItem` API, without downloading the file.
+- **Font family selector**: Fira Code, JetBrains Mono, Cascadia Code, Source Code Pro, Consolas.
+- **Frame width control** (slider 400–1400 px): allows creating wider screenshots for code with long lines.
+- **Configurable starting line number**: useful when capturing a fragment from a real file (e.g. lines 120–145).
+- **Editable watermark text**: no longer hardcoded to "Made with CodeShot".
+- **Auto-adaptive watermark color**: automatically switches to dark color when the active background is light.
+- **Live line and character counter** (e.g. `47 lines · 1.2 KB`).
+- **Per-language code templates**: 18 representative snippets — each language shows its own idiomatic example instead of the same `fibonacci` for all.
+- **Automatic language detection on paste**: heuristics on the first line of code detect Python, Rust, PHP, Go, C++, Java, C#, JSX, SQL, YAML, JSON, Bash, HTML, and Markdown.
+- **File drag & drop**: drag any code file (`.js`, `.py`, `.rs`, etc.) onto the editor to load it; language and window title are updated automatically.
+- **"Restore defaults" button**: clears all `localStorage` preferences and reloads the interface.
+- **UI keyboard shortcuts**: `Ctrl+Enter` downloads, `Ctrl+Shift+C` copies to clipboard, `Ctrl+L` clears the code, `Ctrl+±` controls zoom.
+- **Complete preference persistence**: language, code theme, font size and family, frame style and width, title bar, line numbers, starting line, padding, radius, shadow, watermark, and background are saved in `localStorage` and restored on reload.
+- **New VS Code command `codeshot.captureFile`**: captures the entire open file without needing a text selection.
+- **Explicit `activationEvents`** in `package.json` for all three commands and the sidebar view.
+- **VS Code keybindings**: `Ctrl+Shift+S` → capture selection; `Ctrl+Shift+Alt+S` → capture full file.
+- **Improved Marketplace categories**: added `Snippets` and `Education`.
+- **`retainContextWhenHidden: true`** on the Activity Bar view: webview state is preserved when the panel is hidden.
+- **JPEG export** with a quality slider (50–100 %): new "Export" section in the controls panel; transparent backgrounds are automatically replaced with white when exporting as JPEG.
+- **Configurable export scale** (1×, 2×, or 3×): replaces the previously fixed 2× scale.
+- **Named style presets** (web version): save the current visual configuration (language, theme, font, frame, background, etc.) with a custom name and restore it with one click; presets are persisted in `localStorage`.
+- **Share by link** (web version): the "🔗 Share" button serializes the full state (settings + code) into the URL hash using Base64; opening that link automatically restores the complete state.
+
+### 🔄 Changed
+
+- **Critical bug fixed — long-line resizing**: the window frame now auto-expands with content instead of clipping it. Changes: `window-frame` uses `min-width` instead of a fixed `width`, `max-width: 100%` removed from `export-stage`, `code-editor-wrapper` changed to `overflow: visible`, `#highlightPre` uses `width: max-content`, and `syncTextareaSize()` syncs both height and width of the textarea overlay.
+- **Improved performance**: 80 ms debounce on `highlightCodeNow` (avoids re-running Prism on every keystroke), incremental `updateLineNumbers` (only recalculates when the line count changes), `syncTextareaSize` uses `requestAnimationFrame` (avoids forced synchronous layouts).
+- **`mapVscodeLanguageToPrism` expanded**: added Kotlin, Swift, Dart, Scala, Lua, PowerShell, R, Groovy, Perl, Dockerfile, TOML, INI, Batch, Objective-C, CoffeeScript, GraphQL, Handlebars, Less, SCSS.
+- **"Actions" section** added to the controls panel with a summary of available keyboard shortcuts.
+- **Extension version** bumped to `1.1.0`.
+
+### 🐛 Fixed
+
+- **`pendingSelection` as a global variable**: replaced with a `Map<Webview, Selection>` to prevent race conditions when the panel and the sidebar view are open simultaneously.
 
 ---
 

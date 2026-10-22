@@ -2,22 +2,27 @@
   "name": "codeshot",
   "displayName": "CodeShot — Capturas de código elegantes",
   "description": "Crea capturas de código elegantes con marcos de ventana, fondos degradados y temas de sintaxis, sin salir de VS Code.",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "publisher": "codeshot",
+  "license": "MIT",
   "icon": "images/icon.png",
   "engines": {
     "vscode": "^1.80.0"
   },
   "categories": [
     "Other",
-    "Visualization"
+    "Visualization",
+    "Snippets",
+    "Education"
   ],
   "keywords": [
     "codeshot",
     "screenshot",
     "code screenshot",
     "captura de codigo",
-    "carbon"
+    "carbon",
+    "ray.so",
+    "code image"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -43,13 +48,32 @@
     "commands": [
       {
         "command": "codeshot.open",
-        "title": "CodeShot: Abrir editor de capturas",
+        "title": "Abrir editor de capturas",
         "category": "CodeShot"
       },
       {
         "command": "codeshot.openWithSelection",
-        "title": "CodeShot: Capturar selección actual",
+        "title": "Capturar selección actual",
         "category": "CodeShot"
+      },
+      {
+        "command": "codeshot.captureFile",
+        "title": "Capturar archivo completo",
+        "category": "CodeShot"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "codeshot.openWithSelection",
+        "key": "ctrl+shift+s",
+        "mac": "cmd+shift+s",
+        "when": "editorHasSelection"
+      },
+      {
+        "command": "codeshot.captureFile",
+        "key": "ctrl+shift+alt+s",
+        "mac": "cmd+shift+alt+s",
+        "when": "editorIsOpen"
       }
     ],
     "menus": {
@@ -60,12 +84,21 @@
         {
           "command": "codeshot.openWithSelection",
           "when": "editorHasSelection"
+        },
+        {
+          "command": "codeshot.captureFile",
+          "when": "editorIsOpen"
         }
       ],
       "editor/context": [
         {
           "command": "codeshot.openWithSelection",
           "when": "editorHasSelection",
+          "group": "navigation"
+        },
+        {
+          "command": "codeshot.captureFile",
+          "when": "editorIsOpen",
           "group": "navigation"
         }
       ]

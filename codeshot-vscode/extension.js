@@ -8,7 +8,13 @@ let currentPanel;
 /** @type {vscode.WebviewView | undefined} */
 let currentSidebarView;
 
-let pendingSelection = null;
+/**
+ * Mapa de selecciones pendientes por webview. Reemplaza la variable
+ * global `pendingSelection` para evitar condiciones de carrera cuando
+ * el panel y la barra lateral están abiertos simultáneamente.
+ * @type {Map<object, {code: string, language: string, fileName: string}>}
+ */
+const pendingSelectionMap = new Map();
 
 function activate(context) {
   const sidebarProvider = new CodeShotViewProvider(context);
@@ -31,16 +37,30 @@ function activate(context) {
         const language = mapVscodeLanguageToPrism(editor.document.languageId);
         const fileName = path.basename(editor.document.fileName);
 
-        // El webview puede no estar listo de inmediato; se envía el
-        // mensaje tras un breve retraso y también se reenvía cuando el
-        // webview confirme que ya cargó (ver manejador de mensajes).
         panel.webview.postMessage({ type: 'loadSelection', code, language, fileName });
-        pendingSelection = { code, language, fileName };
+        pendingSelectionMap.set(panel.webview, { code, language, fileName });
       }
     }
   );
 
-  context.subscriptions.push(openCommand, openWithSelectionCommand);
+  const captureFileCommand = vscode.commands.registerCommand(
+    'codeshot.captureFile',
+    () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showInformationMessage('Abre un archivo para capturarlo con CodeShot.');
+        return;
+      }
+      const panel = createOrShowPanel(context);
+      const code = editor.document.getText();
+      const language = mapVscodeLanguageToPrism(editor.document.languageId);
+      const fileName = path.basename(editor.document.fileName);
+      panel.webview.postMessage({ type: 'loadSelection', code, language, fileName });
+      pendingSelectionMap.set(panel.webview, { code, language, fileName });
+    }
+  );
+
+  context.subscriptions.push(openCommand, openWithSelectionCommand, captureFileCommand);
 }
 
 function createOrShowPanel(context) {
@@ -87,6 +107,7 @@ class CodeShotViewProvider {
   resolveWebviewView(webviewView) {
     webviewView.webview.options = {
       enableScripts: true,
+      retainContextWhenHidden: true,
       localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'media')]
     };
 
@@ -107,9 +128,12 @@ class CodeShotViewProvider {
 // postMessage (`ready`, `loadSelection`, `saveImage`).
 function attachMessageHandler(webview) {
   webview.onDidReceiveMessage(async (message) => {
-    if (message?.type === 'ready' && pendingSelection) {
-      webview.postMessage({ type: 'loadSelection', ...pendingSelection });
-      pendingSelection = null;
+    if (message?.type === 'ready') {
+      const pending = pendingSelectionMap.get(webview);
+      if (pending) {
+        webview.postMessage({ type: 'loadSelection', ...pending });
+        pendingSelectionMap.delete(webview);
+      }
       return;
     }
 
@@ -175,7 +199,27 @@ function mapVscodeLanguageToPrism(languageId) {
     shellscript: 'bash',
     sql: 'sql',
     yaml: 'yaml',
-    markdown: 'markdown'
+    markdown: 'markdown',
+    // Lenguajes adicionales
+    kotlin: 'kotlin',
+    swift: 'swift',
+    dart: 'dart',
+    scala: 'scala',
+    lua: 'lua',
+    powershell: 'powershell',
+    r: 'r',
+    groovy: 'groovy',
+    perl: 'perl',
+    dockerfile: 'docker',
+    toml: 'toml',
+    ini: 'ini',
+    bat: 'batch',
+    objective_c: 'objectivec',
+    coffeescript: 'coffeescript',
+    graphql: 'graphql',
+    handlebars: 'handlebars',
+    less: 'less',
+    scss: 'scss'
   };
   return map[languageId] || 'javascript';
 }

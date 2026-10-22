@@ -1,26 +1,37 @@
 # CodeShot — Capturas de código elegantes (VS Code)
 
-Extensión de VS Code que abre un editor visual para crear capturas de código elegantes: marcos de ventana (macOS, Windows, navegador, Ubuntu), fondos degradados, resaltado de sintaxis con temas de Prism.js y exportación a PNG — todo sin salir del editor.
+Extensión de VS Code que abre un editor visual para crear capturas de código elegantes: marcos de ventana (macOS, Windows 11, navegador, Ubuntu), fondos degradados, resaltado de sintaxis con temas de Prism.js y exportación a PNG o JPEG — todo sin salir del editor.
+
+> **Versión actual: 1.2.0**
 
 ## Características
 
-- Vista integrada en la **barra de actividades** (barra lateral izquierda) de VS Code, además del panel independiente.
-- Editor de código con resaltado de sintaxis en vivo (18+ lenguajes).
+- Vista integrada en la **barra de actividades** (barra lateral izquierda) de VS Code, además del panel independiente. El estado del webview se preserva al ocultar el panel (`retainContextWhenHidden`).
+- Editor de código con resaltado de sintaxis en vivo (18+ lenguajes, 9 temas de color).
 - Marcos de ventana: macOS, Windows 11, navegador, Ubuntu/Linux o sin marco.
+- **Control de ancho del marco** (slider 400–1400 px) para capturas de líneas largas.
 - Fondos degradados predefinidos o color personalizado.
 - Control de padding, radio de borde, intensidad de sombra, números de línea y marca de agua.
+- **Número de línea inicial configurable**: útil al capturar fragmentos de un archivo real (ej. líneas 120–145).
+- **Selector de familia tipográfica**: Fira Code, JetBrains Mono, Cascadia Code, Source Code Pro, Consolas.
+- **Texto de marca de agua editable** con color auto-adaptable según el fondo activo.
+- **Contador de líneas y caracteres** en tiempo real.
+- **Detección automática de lenguaje** al capturar desde el editor activo.
+- **Exportación a PNG** (transparencia real) o **JPEG** (calidad ajustable 50–100 %) en escala 1×/2×/3×.
+- **Botón "Copiar imagen"**: copia la captura directamente al portapapeles.
 - Tema claro/oscuro de la interfaz.
-- Exportación a PNG mediante el diálogo nativo "Guardar como" de VS Code.
-- Comando para capturar directamente la selección activa del editor.
+- **Presets de estilo**: guarda configuraciones visuales con nombre personalizado y restáuralas con un clic.
+- Persistencia completa de preferencias en `localStorage`.
 
 ## Comandos
 
-| Comando | Descripción |
-|---|---|
-| `CodeShot: Abrir editor de capturas` | Abre el panel de CodeShot vacío. |
-| `CodeShot: Capturar selección actual` | Abre el panel con el texto seleccionado en el editor activo, detectando automáticamente el lenguaje y el nombre de archivo. |
+| Comando | Atajo | Descripción |
+|---|---|---|
+| `CodeShot: Abrir editor de capturas` | — | Abre el panel de CodeShot vacío. |
+| `CodeShot: Capturar selección actual` | `Ctrl+Shift+S` / `Cmd+Shift+S` | Abre el panel con el texto seleccionado en el editor activo, detectando automáticamente el lenguaje y el nombre de archivo. |
+| `CodeShot: Capturar archivo completo` | `Ctrl+Shift+Alt+S` / `Cmd+Shift+Alt+S` | Carga el archivo activo completo en el panel de CodeShot. |
 
-También puedes acceder a "Capturar selección actual" desde el menú contextual del editor cuando hay texto seleccionado.
+Los comandos `Capturar selección actual` y `Capturar archivo completo` también están disponibles en el **menú contextual** del editor.
 
 ## Uso
 
@@ -28,15 +39,20 @@ También puedes acceder a "Capturar selección actual" desde el menú contextual
 
 **Opción 2 — Paleta de comandos:**
 1. Abre la paleta de comandos (`Ctrl+Shift+P` / `Cmd+Shift+P`).
-2. Ejecuta `CodeShot: Abrir editor de capturas` (o selecciona código y usa `Capturar selección actual`).
+2. Ejecuta `CodeShot: Abrir editor de capturas`, `Capturar selección actual` o `Capturar archivo completo`.
 
-En ambos casos:
+**Opción 3 — Atajos de teclado:**
+- Selecciona código y pulsa `Ctrl+Shift+S` para capturar la selección.
+- Pulsa `Ctrl+Shift+Alt+S` para capturar el archivo completo.
+
+En todos los casos:
 3. Ajusta el estilo en el panel lateral.
-4. Haz clic en "Descargar PNG" y elige dónde guardar la imagen.
+4. Haz clic en **"Descargar PNG"** (o **"Descargar JPEG"**) y elige dónde guardar la imagen.
+   - La extensión usa el diálogo nativo **"Guardar como"** de VS Code, ya que los webviews no tienen acceso directo al sistema de archivos.
 
 ## Desarrollo
 
-```
+```bash
 cd codeshot-vscode
 code .
 ```
@@ -45,13 +61,16 @@ Presiona `F5` para abrir una ventana de **Extension Development Host** con la ex
 
 ## Empaquetado
 
-```
+```bash
 npm install -g @vscode/vsce
-vsce package
+cd codeshot-vscode
+vsce package --no-dependencies --allow-missing-repository
 ```
 
 Esto genera un archivo `.vsix` que puede instalarse manualmente con:
 
+```bash
+code --install-extension codeshot-1.2.0.vsix
 ```
-code --install-extension codeshot-1.0.0.vsix
-```
+
+O desde la interfaz: paleta de comandos (`Ctrl+Shift+P`) → **"Extensiones: Instalar desde VSIX..."**.

@@ -23,7 +23,10 @@
       <button id="themeToggleBtn" class="btn-icon btn-theme-toggle" type="button" aria-label="Cambiar a tema claro" title="Cambiar tema claro/oscuro">
         <span id="themeIcon" aria-hidden="true">🌙</span>
       </button>
-      <button id="downloadBtn" class="btn btn-primary" type="button">
+      <button id="copyImgBtn" class="btn btn-secondary-header" type="button" title="Ctrl+Shift+C">
+        <span aria-hidden="true">📋</span> Copiar
+      </button>
+      <button id="downloadBtn" class="btn btn-primary" type="button" title="Ctrl+Enter">
         <span aria-hidden="true">⬇</span> Descargar PNG
       </button>
     </div>
@@ -53,6 +56,10 @@
         <label for="windowTitle">Título de la ventana</label>
         <input type="text" id="windowTitle" value="untitled.js" autocomplete="off" />
 
+        <label for="frameWidth">Ancho del marco: <span id="frameWidthVal">680</span>px</label>
+        <input type="range" id="frameWidth" min="400" max="1400" value="680"
+               aria-valuemin="400" aria-valuemax="1400" aria-valuenow="680" aria-valuetext="680 píxeles" />
+
         <label class="checkbox-label">
           <input type="checkbox" id="showTitlebar" checked />
           Mostrar barra de título
@@ -68,6 +75,15 @@
         <button id="clearCodeBtn" class="btn btn-secondary" type="button">
           <span aria-hidden="true">🗑</span> Limpiar código
         </button>
+
+        <label for="fontFamily">Familia de fuente</label>
+        <select id="fontFamily">
+          <option value="fira-code">Fira Code</option>
+          <option value="jetbrains">JetBrains Mono</option>
+          <option value="cascadia">Cascadia Code</option>
+          <option value="source-code">Source Code Pro</option>
+          <option value="consolas">Consolas</option>
+        </select>
 
         <label for="language">Lenguaje</label>
         <select id="language">
@@ -113,6 +129,11 @@
           <input type="checkbox" id="showLineNumbers" />
           Números de línea
         </label>
+
+        <label for="lineStart">Número de línea inicial</label>
+        <input type="number" id="lineStart" min="1" max="9999" value="1" />
+
+        <p id="codeStats" class="code-stats" aria-live="polite"></p>
       </section>
 
       <section class="control-group" aria-labelledby="group-fondo">
@@ -146,6 +167,64 @@
           <input type="checkbox" id="showWatermark" />
           Marca de agua
         </label>
+        <label for="watermarkText" class="sr-only">Texto de la marca de agua</label>
+        <input type="text" id="watermarkText" value="Hecho con CodeShot" placeholder="Texto de la marca de agua" autocomplete="off" />
+      </section>
+
+      <section class="control-group" aria-labelledby="group-exportacion">
+        <h2 id="group-exportacion">Exportación</h2>
+
+        <label for="exportFormat">Formato</label>
+        <select id="exportFormat">
+          <option value="png">PNG (transparencia)</option>
+          <option value="jpeg">JPEG (menor tamaño)</option>
+        </select>
+
+        <div id="jpegQualityWrapper" style="display:none">
+          <label for="exportQuality">Calidad JPEG: <span id="exportQualityVal">90</span>%</label>
+          <input type="range" id="exportQuality" min="50" max="100" value="90"
+                 aria-valuemin="50" aria-valuemax="100" aria-valuenow="90" />
+        </div>
+
+        <fieldset class="scale-group">
+          <legend>Escala de exportación</legend>
+          <label class="scale-option"><input type="radio" name="exportScale" value="1" /> 1×</label>
+          <label class="scale-option"><input type="radio" name="exportScale" value="2" checked /> 2× (recomendado)</label>
+          <label class="scale-option"><input type="radio" name="exportScale" value="3" /> 3×</label>
+        </fieldset>
+
+        <button id="exportZipBtn" class="btn btn-secondary" type="button" style="margin-top:10px">
+          <span aria-hidden="true">🗜</span> Exportar ZIP (1×/2×/3×)
+        </button>
+      </section>
+
+      <section class="control-group" aria-labelledby="group-historial">
+        <h2 id="group-historial">Historial reciente</h2>
+        <div id="historyList" class="history-list"></div>
+        <button id="clearHistoryBtn" class="btn btn-secondary" type="button" style="margin-top:0">
+          <span aria-hidden="true">🗑</span> Limpiar historial
+        </button>
+      </section>
+
+      <section class="control-group" aria-labelledby="group-presets">
+        <h2 id="group-presets">Presets de estilo</h2>
+        <p class="hint-text" style="margin-top:0;font-size:11.5px">Guarda la configuración actual con un nombre para reutilizarla.</p>
+        <div class="preset-save-row">
+          <input type="text" id="presetNameInput" placeholder="Nombre del preset…" autocomplete="off" aria-label="Nombre del preset" />
+          <button id="savePresetBtn" class="btn btn-secondary" type="button" style="width:auto;margin-top:0;padding:8px 12px">💾</button>
+        </div>
+        <div id="presetList" class="preset-list"></div>
+      </section>
+
+      <section class="control-group" aria-labelledby="group-acciones">
+        <h2 id="group-acciones">Acciones</h2>
+        <p class="hint-text" style="font-size:11.5px;margin-top:0">
+          <span aria-hidden="true">⌨️</span>
+          <strong>Ctrl+Enter</strong> descargar · <strong>Ctrl+Shift+C</strong> copiar · <strong>Ctrl+L</strong> limpiar
+        </p>
+        <button id="resetDefaultsBtn" class="btn btn-secondary" type="button">
+          <span aria-hidden="true">↺</span> Restaurar valores por defecto
+        </button>
       </section>
 
     </aside>
