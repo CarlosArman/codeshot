@@ -15,6 +15,7 @@
   <img src="https://img.shields.io/badge/Platforms-Web%20%7C%20Chrome%20%7C%20VS%20Code-blue" alt="Platforms" />
   <img src="https://img.shields.io/badge/Accessibility-WCAG%202.2-success" alt="Accessibility" />
   <img src="https://img.shields.io/badge/Status-Portfolio%20Ready-yellow" alt="Status" />
+  <img src="https://img.shields.io/github/actions/workflow/status/CarlosArman/codeshot/deploy-pages.yml?label=GitHub%20Pages&logo=githubactions&logoColor=white" alt="GitHub Pages deploy" />
 </p>
 
 <p align="center"><b>🌐 Language / Idioma</b></p>
@@ -112,6 +113,7 @@ The solution combines:
 - **Browser extension**: Chrome Extension API (Manifest V3)
 - **Editor extension**: VS Code Extension API (WebviewPanel, Commands)
 - **Packaging**: `Compress-Archive` (Chrome), `@vscode/vsce` (VS Code)
+- **CI/CD**: GitHub Actions (`JamesIves/github-pages-deploy-action`) — automatic deployment to GitHub Pages on every push to `main` that modifies `codeshot-web/`
 
 ---
 
@@ -119,6 +121,10 @@ The solution combines:
 
 ```
 CodeShot
+├── .github/
+│   └── workflows/
+│       └── deploy-pages.yml       # Auto-deploy codeshot-web/ → gh-pages on push to main
+│
 ├── codeshot-web/                       # Web app + Chrome extension
 │   ├── index.html
 │   ├── style.css

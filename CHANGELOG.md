@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### ⚙️ CI/CD
+
+- **Automatic GitHub Pages deployment** (`.github/workflows/deploy-pages.yml`): push to `main` now automatically deploys `codeshot-web/` to the `gh-pages` branch using `JamesIves/github-pages-deploy-action`. The workflow only triggers when files inside `codeshot-web/**` change; existing files in `gh-pages` not present in `codeshot-web/` (e.g. `vendor/`) are preserved (`clean: false`). Manual dispatch via `workflow_dispatch` is also supported.
+
+---
+
 ## [1.3.0] - 2026-10-27
 
 ### ✨ Added
