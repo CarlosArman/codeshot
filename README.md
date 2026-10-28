@@ -1,7 +1,7 @@
 # 📸 CodeShot
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.3.0-blueviolet" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-1.3.1-blueviolet" alt="Version" />
   <img src="https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white" alt="HTML5" />
   <img src="https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white" alt="CSS3" />
   <img src="https://img.shields.io/badge/JavaScript-Vanilla-F7DF1E?logo=javascript&logoColor=black" alt="JavaScript" />
@@ -43,7 +43,7 @@ It highlights practical capability in:
 - Advanced DOM manipulation and in-browser image generation (`html2canvas`).
 - Integrating third-party libraries (Prism.js) 100% locally/offline, respecting strict security policies (Manifest V3 CSP).
 - Building both browser extensions (Chrome Manifest V3) and editor extensions (VS Code Extension API) from the same UI core.
-- Designing accessible interfaces (ARIA, keyboard navigation, WCAG 2.2 contrast) with iconography drawn entirely in pure CSS (no SVG or emoji, to avoid rendering inconsistencies across systems).
+- Designing accessible interfaces (ARIA, keyboard navigation, WCAG 2.2 contrast) with CSS UI controls and a dedicated, portable SVG brand mark shared by web, Chrome, and VS Code.
 
 This makes the repository a solid example of **multi-platform frontend product engineering**.
 
@@ -64,8 +64,8 @@ The solution combines:
 - High-resolution PNG export (`html2canvas`), with real transparency support.
 
 🔗 **Web app**: [`codeshot-web/index.html`](./codeshot-web/index.html) — 🚀 Live demo: **https://carlosarman.github.io/codeshot/**
-🔗 **Chrome extension**: [`codeshot-web/`](./codeshot-web) + [`extension/codeshot-chrome-extension.zip`](./extension/codeshot-chrome-extension.zip)
-🔗 **VS Code extension**: [`codeshot-vscode/`](./codeshot-vscode) + [`extension/codeshot-vscode-extension.vsix`](./extension/codeshot-vscode-extension.vsix)
+🔗 **Chrome extension**: [`codeshot-web/`](./codeshot-web)
+🔗 **VS Code extension**: [`codeshot-vscode/`](./codeshot-vscode)
 
 ---
 
@@ -93,14 +93,28 @@ The solution combines:
 
 - ✅ A single codebase (`codeshot-web/`) reused across the web app and the Chrome extension.
 - ✅ Third-party libraries vendored locally (no CDNs), compatible with strict Content Security Policy.
-- ✅ UI iconography (locks, arrows, window controls) drawn 100% in CSS, no SVG or emoji — avoiding font inconsistencies across operating systems.
+- ✅ UI controls (locks, arrows, window controls) drawn in CSS; the official CodeShot diamond mark is delivered as SVG and rasterized PNG assets for consistent cross-platform branding.
 - ✅ Clear separation between shared UI logic (`script.js`) and platform-specific logic (`background.js` for Chrome, `extension.js` for VS Code).
 
 ### Portfolio Value
 
 - ✅ Practical example of multi-platform extension development (browser + editor).
 - ✅ Documentation oriented toward real installation, not just development.
-- ✅ Distribution packages (`.zip`, `.vsix`) already generated and ready to install.
+- ✅ Reproducible Chrome (`.zip`) and VS Code (`.vsix`) packaging from the current source assets.
+
+---
+
+## 🎨 Brand Assets
+
+CodeShot uses a rounded capture frame with a **diamond code signature** as its official visual mark. The `brand/` directory contains primary, transparent, dark, light, monochrome, favicon, and marketplace SVG variants.
+
+Run the following after changing the source mark to regenerate all Chrome, VS Code, favicon, and desktop PNG sizes:
+
+```bash
+python brand/generate_assets.py
+```
+
+The web/Chrome header loads `codeshot-web/icons/codeshot-brand.svg`; the VS Code webview loads `codeshot-vscode/media/codeshot-brand.svg`. Both are copies of the official transparent brand asset.
 
 ---
 
@@ -131,19 +145,20 @@ CodeShot
 │   ├── script.js
 │   ├── manifest.json              # Manifest V3 (Chrome extension)
 │   ├── background.js              # Extension service worker
-│   ├── icons/                     # Extension icons (16/32/48/128px)
+│   ├── icons/                     # Chrome icons + official CodeShot brand SVG
 │   ├── favicon.png
 │   └── vendor/                    # Prism.js + html2canvas (local, offline)
+│
+├── brand/                           # Source SVG identity + reproducible PNG exports
+│   ├── codeshot-icon.svg           # Primary diamond capture mark
+│   ├── codeshot-marketplace.svg    # Marketplace-optimized mark
+│   └── generate_assets.py          # Regenerates icon PNG sizes
 │
 ├── codeshot-vscode/                 # VS Code extension
 │   ├── extension.js               # WebviewPanel logic and commands
 │   ├── package.json               # Extension manifest
 │   ├── media/                     # Webview HTML/CSS/JS (shares design with codeshot-web/)
 │   └── images/icon.png            # Extension icon
-│
-├── extension/                       # Ready-to-install packages
-│   ├── codeshot-chrome-extension.zip
-│   └── codeshot-vscode-extension.vsix
 │
 └── README.md
 ```
@@ -164,8 +179,8 @@ cd codeshot
 | Option | Command / Action |
 |---|---|
 | 🌐 Web app | Open `codeshot-web/index.html` in your browser |
-| 🧩 Chrome extension | Load the `codeshot-web/` folder unpacked, or install the unzipped `extension/codeshot-chrome-extension.zip` |
-| 🧰 VS Code extension | `code --install-extension extension/codeshot-vscode-extension.vsix` |
+| 🧩 Chrome extension | Load the `codeshot-web/` folder unpacked |
+| 🧰 VS Code extension | Package `codeshot-vscode/` with `vsce`, then install the generated `.vsix` |
 
 No build, server, or internet connection is required in any case.
 
@@ -184,12 +199,12 @@ Or run it locally:
 
 ## 🧩 Install the Chrome / Edge / Brave extension
 
-Ready-made package: **[`extension/codeshot-chrome-extension.zip`](./extension/codeshot-chrome-extension.zip)**.
+The extension source is the [`codeshot-web/`](./codeshot-web) folder.
 
 1. Open `chrome://extensions` (or `edge://extensions`, `brave://extensions`).
 2. Enable **"Developer mode"**.
 3. Click **"Load unpacked"**.
-4. Select the [`codeshot-web/`](./codeshot-web) folder, or the folder resulting from unzipping the `.zip`.
+4. Select the [`codeshot-web/`](./codeshot-web) folder.
 5. The CodeShot icon will appear in the toolbar.
 
 > The extension works 100% offline: Prism.js and html2canvas are included locally in `codeshot-web/vendor/`, complying with Manifest V3's Content Security Policy.
@@ -205,17 +220,7 @@ Compress-Archive -Path * -DestinationPath ..\extension\codeshot-chrome-extension
 
 ## 🧰 Install the VS Code extension
 
-Ready-made package: **[`extension/codeshot-vscode-extension.vsix`](./extension/codeshot-vscode-extension.vsix)**.
-
-### Option A — Install the already generated `.vsix`
-
-```bash
-code --install-extension extension/codeshot-vscode-extension.vsix
-```
-
-Or from the UI: command palette (`Ctrl+Shift+P`) → **"Extensions: Install from VSIX..."**.
-
-### Option B — Development mode
+### Option A — Development mode
 
 ```bash
 cd codeshot-vscode
@@ -224,7 +229,7 @@ code .
 
 Press **`F5`** to open an **Extension Development Host** window.
 
-### Option C — Regenerate the `.vsix` manually
+### Option B — Package and install the `.vsix`
 
 ```bash
 npm install -g @vscode/vsce
@@ -253,7 +258,7 @@ More details in the [VS Code extension README](./codeshot-vscode/README.md).
 CodeShot follows a **layered vanilla JS architecture**, with no build step:
 
 - `index.html` / `webview.html` — semantic UI structure.
-- `style.css` — all styles, including iconography drawn with CSS pseudo-elements (no SVG or emoji).
+- `style.css` — application styles and CSS-drawn UI controls; the official brand icon is loaded from a local SVG asset.
 - `script.js` — shared UI logic: syntax highlighting, appearance controls, export, project library, thumbnail generation, and IndexedDB persistence.
 - `manifest.json` + `background.js` — Chrome-specific layer (Manifest V3, service worker).
 - `extension.js` — VS Code-specific layer (WebviewPanel, commands, message bridge with the webview).

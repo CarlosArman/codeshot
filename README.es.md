@@ -1,7 +1,7 @@
 # 📸 CodeShot
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.3.0-blueviolet" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-1.3.1-blueviolet" alt="Version" />
   <img src="https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white" alt="HTML5" />
   <img src="https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white" alt="CSS3" />
   <img src="https://img.shields.io/badge/JavaScript-Vanilla-F7DF1E?logo=javascript&logoColor=black" alt="JavaScript" />
@@ -43,7 +43,7 @@ Destaca capacidad práctica en:
 - Manipulación avanzada del DOM y generación de imágenes en el navegador (`html2canvas`).
 - Integración de librerías de terceros (Prism.js) de forma 100% local/offline, respetando políticas estrictas de seguridad (CSP de Manifest V3).
 - Desarrollo de extensiones de navegador (Chrome Manifest V3) y de editor (VS Code Extension API) a partir del mismo núcleo de UI.
-- Diseño de interfaces accesibles (ARIA, navegación por teclado, contraste WCAG 2.2) e iconografía dibujada íntegramente con CSS puro (sin SVG ni emojis, para evitar inconsistencias de renderizado entre sistemas).
+- Diseño de interfaces accesibles (ARIA, navegación por teclado, contraste WCAG 2.2), controles de interfaz en CSS y una marca SVG portable compartida por web, Chrome y VS Code.
 
 Esto convierte al repositorio en un ejemplo sólido de **ingeniería de producto frontend multiplataforma**.
 
@@ -64,8 +64,8 @@ La solución combina:
 - Exportación a PNG en alta resolución (`html2canvas`), con soporte de transparencia real.
 
 🔗 **App web**: [`codeshot-web/index.html`](./codeshot-web/index.html) — 🚀 Demo en vivo: **https://carlosarman.github.io/codeshot/**
-🔗 **Extensión de Chrome**: [`codeshot-web/`](./codeshot-web) + [`extension/codeshot-chrome-extension.zip`](./extension/codeshot-chrome-extension.zip)
-🔗 **Extensión de VS Code**: [`codeshot-vscode/`](./codeshot-vscode) + [`extension/codeshot-vscode-extension.vsix`](./extension/codeshot-vscode-extension.vsix)
+🔗 **Extensión de Chrome**: [`codeshot-web/`](./codeshot-web)
+🔗 **Extensión de VS Code**: [`codeshot-vscode/`](./codeshot-vscode)
 
 ---
 
@@ -93,14 +93,28 @@ La solución combina:
 
 - ✅ Una sola base de código (`codeshot-web/`) reutilizada en la app web y la extensión de Chrome.
 - ✅ Librerías de terceros vendorizadas localmente (sin CDNs), compatibles con Content Security Policy estricta.
-- ✅ Iconografía de interfaz (candados, flechas, controles de ventana) dibujada 100% en CSS, sin SVG ni emojis — evitando inconsistencias de fuente entre sistemas operativos.
+- ✅ Controles de interfaz (candados, flechas, controles de ventana) dibujados en CSS; la marca oficial de diamante de CodeShot se entrega en SVG y PNG para un branding consistente entre plataformas.
 - ✅ Separación clara entre lógica de UI (`script.js`) y lógica específica de cada plataforma (`background.js` para Chrome, `extension.js` para VS Code).
 
 ### Portfolio Value
 
 - ✅ Ejemplo práctico de desarrollo de extensiones multiplataforma (navegador + editor).
 - ✅ Documentación orientada a instalación real, no solo a desarrollo.
-- ✅ Paquetes de distribución (`.zip`, `.vsix`) ya generados y listos para instalar.
+- ✅ Empaquetado reproducible de Chrome (`.zip`) y VS Code (`.vsix`) a partir de los assets actuales.
+
+---
+
+## 🎨 Assets de marca
+
+CodeShot usa un marco de captura redondeado con una **firma de código en forma de diamante** como marca oficial. El directorio `brand/` contiene las variantes SVG principal, transparente, clara, oscura, monocromática, favicon y marketplace.
+
+Después de modificar la marca fuente, regenera todos los PNG de Chrome, VS Code, favicon y escritorio con:
+
+```bash
+python brand/generate_assets.py
+```
+
+El encabezado web/Chrome carga `codeshot-web/icons/codeshot-brand.svg`; el webview de VS Code carga `codeshot-vscode/media/codeshot-brand.svg`. Ambos provienen del asset oficial transparente.
 
 ---
 
@@ -131,19 +145,20 @@ CodeShot
 │   ├── script.js
 │   ├── manifest.json              # Manifest V3 (extensión de Chrome)
 │   ├── background.js              # Service worker de la extensión
-│   ├── icons/                     # Iconos de la extensión (16/32/48/128px)
+│   ├── icons/                     # Iconos Chrome + SVG oficial de CodeShot
 │   ├── favicon.png
 │   └── vendor/                    # Prism.js + html2canvas (local, offline)
+│
+├── brand/                           # Identidad SVG fuente + exportaciones PNG reproducibles
+│   ├── codeshot-icon.svg           # Marca principal de captura con diamante
+│   ├── codeshot-marketplace.svg    # Marca optimizada para marketplace
+│   └── generate_assets.py          # Regenera los tamaños PNG
 │
 ├── codeshot-vscode/                 # Extensión de VS Code
 │   ├── extension.js               # Lógica del WebviewPanel y comandos
 │   ├── package.json               # Manifiesto de la extensión
 │   ├── media/                     # HTML/CSS/JS del webview (comparte diseño con codeshot-web/)
 │   └── images/icon.png            # Icono de la extensión
-│
-├── extension/                       # Paquetes listos para instalar
-│   ├── codeshot-chrome-extension.zip
-│   └── codeshot-vscode-extension.vsix
 │
 └── README.md
 ```
@@ -164,8 +179,8 @@ cd codeshot
 | Opción | Comando / Acción |
 |---|---|
 | 🌐 App web | Abre `codeshot-web/index.html` en tu navegador |
-| 🧩 Extensión de Chrome | Carga la carpeta `codeshot-web/` sin empaquetar, o instala `extension/codeshot-chrome-extension.zip` descomprimido |
-| 🧰 Extensión de VS Code | `code --install-extension extension/codeshot-vscode-extension.vsix` |
+| 🧩 Extensión de Chrome | Carga la carpeta `codeshot-web/` sin empaquetar |
+| 🧰 Extensión de VS Code | Empaqueta `codeshot-vscode/` con `vsce` e instala el `.vsix` generado |
 
 No se requiere build, servidor, ni conexión a internet en ningún caso.
 
@@ -184,12 +199,12 @@ O ejecútala localmente:
 
 ## 🧩 Instalar la extensión de Chrome / Edge / Brave
 
-Paquete listo: **[`extension/codeshot-chrome-extension.zip`](./extension/codeshot-chrome-extension.zip)**.
+El código fuente de la extensión está en [`codeshot-web/`](./codeshot-web).
 
 1. Abre `chrome://extensions` (o `edge://extensions`, `brave://extensions`).
 2. Activa el **"Modo de desarrollador"**.
 3. Haz clic en **"Cargar extensión sin empaquetar"**.
-4. Selecciona la carpeta [`codeshot-web/`](./codeshot-web), o la carpeta resultante de descomprimir el `.zip`.
+4. Selecciona la carpeta [`codeshot-web/`](./codeshot-web).
 5. El icono de CodeShot aparecerá en la barra de herramientas.
 
 > La extensión funciona 100% offline: Prism.js y html2canvas están incluidos localmente en `codeshot-web/vendor/`, cumpliendo con la Content Security Policy de Manifest V3.
@@ -205,17 +220,7 @@ Compress-Archive -Path * -DestinationPath ..\extension\codeshot-chrome-extension
 
 ## 🧰 Instalar la extensión de VS Code
 
-Paquete listo: **[`extension/codeshot-vscode-extension.vsix`](./extension/codeshot-vscode-extension.vsix)**.
-
-### Opción A — Instalar el `.vsix` ya generado
-
-```bash
-code --install-extension extension/codeshot-vscode-extension.vsix
-```
-
-O desde la interfaz: paleta de comandos (`Ctrl+Shift+P`) → **"Extensiones: Instalar desde VSIX..."**.
-
-### Opción B — Modo desarrollo
+### Opción A — Modo desarrollo
 
 ```bash
 cd codeshot-vscode
@@ -224,7 +229,7 @@ code .
 
 Presiona **`F5`** para abrir una ventana de **Extension Development Host**.
 
-### Opción C — Regenerar el `.vsix` manualmente
+### Opción B — Empaquetar e instalar el `.vsix`
 
 ```bash
 npm install -g @vscode/vsce
@@ -253,7 +258,7 @@ Más detalles en el [README de la extensión de VS Code](./codeshot-vscode/READM
 CodeShot sigue una arquitectura **vanilla JS por capas**, sin build step:
 
 - `index.html` / `webview.html` — estructura semántica de la interfaz.
-- `style.css` — todos los estilos, incluyendo iconografía dibujada con pseudo-elementos CSS (sin SVG ni emojis).
+- `style.css` — estilos de la aplicación y controles de interfaz dibujados con CSS; el icono oficial de marca se carga desde un asset SVG local.
 - `script.js` — lógica de UI compartida: resaltado de sintaxis, controles de apariencia, exportación, biblioteca de proyectos, generación de miniaturas y persistencia en IndexedDB.
 - `manifest.json` + `background.js` — capa específica de la extensión de Chrome (Manifest V3, service worker).
 - `extension.js` — capa específica de la extensión de VS Code (WebviewPanel, comandos, puente de mensajes con el webview).

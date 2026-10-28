@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="400" viewBox="0 0 360 400" role="img" aria-labelledby="title">
+  <title id="title">CodeShot vertical logo</title>
+  <defs>
+    <linearGradient id="g" x1="74" y1="34" x2="286" y2="258" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6D28D9"/>
+      <stop offset=".3" stop-color="#7C3AED"/>
+      <stop offset=".62" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#C084FC"/>
+    </linearGradient>
+  </defs>
+  <rect x="56" y="36" width="248" height="248" rx="68" fill="url(#g)"/>
+  <path d="M140 84h-21a15 15 0 0 0-15 15v21M220 84h21a15 15 0 0 1 15 15v21M256 200v21a15 15 0 0 1-15 15h-21M140 236h-21a15 15 0 0 1-15-15v-21" fill="none" stroke="#F5F3FF" stroke-opacity=".76" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m180 94 57 57-57 57-57-57 57-57Z" fill="#fff"/>
+  <path d="m173 121-28 30 28 30m14-60 28 30-28 30" fill="none" stroke="#6D28D9" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="180" y="353" text-anchor="middle" fill="#111827" font-family="Inter, Geist, 'SF Pro Display', Arial, sans-serif" font-size="55" font-weight="650" letter-spacing="-3">CodeShot</text>
+</svg>

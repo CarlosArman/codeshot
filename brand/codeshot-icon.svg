@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">CodeShot icon</title>
+  <desc id="desc">CodeShot diamond code signature inside a screenshot capture frame</desc>
+  <defs>
+    <linearGradient id="codeshot-gradient" x1="14" y1="12" x2="114" y2="118" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6D28D9"/>
+      <stop offset=".3" stop-color="#7C3AED"/>
+      <stop offset=".62" stop-color="#8B5CF6"/>
+      <stop offset="1" stop-color="#C084FC"/>
+    </linearGradient>
+    <linearGradient id="diamond-gradient" x1="46" y1="40" x2="82" y2="88" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff"/>
+      <stop offset="1" stop-color="#F5F3FF"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="112" height="112" rx="31" fill="url(#codeshot-gradient)"/>
+  <path d="M47 31H38a7 7 0 0 0-7 7v9M81 31h9a7 7 0 0 1 7 7v9M97 81v9a7 7 0 0 1-7 7h-9M47 97h-9a7 7 0 0 1-7-7v-9" fill="none" stroke="#F5F3FF" stroke-opacity=".76" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M64 39.3 88.7 64 64 88.7 39.3 64 64 39.3Z" fill="url(#diamond-gradient)"/>
+  <path d="m61 51.8-12 12.2L61 76.2M67 51.8 79 64 67 76.2" fill="none" stroke="#6D28D9" stroke-width="5.7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M99 25c5.9 5.1 9.6 12 10.2 19.6" fill="none" stroke="#fff" stroke-opacity=".2" stroke-width="5" stroke-linecap="round"/>
+</svg>

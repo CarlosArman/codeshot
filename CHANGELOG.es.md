@@ -11,9 +11,26 @@ y este proyecto sigue versionado semántico ([SemVer](https://semver.org/lang/es
 
 ## [Sin publicar]
 
+### 🎨 Marca
+
+- **Identidad de diamante de CodeShot**: refinada la marca oficial de marco de captura redondeado con una firma de código en diamante centrada, esquinas de captura mejoradas y el gradiente premium `#6D28D9 → #7C3AED → #8B5CF6 → #C084FC`.
+- **Sistema completo de assets de marca**: añadidas variantes SVG principal, vertical, transparente, oscura, clara, monocromática, favicon, sprite y Marketplace en `brand/`, más exportaciones PNG reproducibles para Chrome, VS Code, favicon y escritorio generadas por `brand/generate_assets.py`.
+- **Integración en los tres aplicativos**: la app web y la extensión Chrome cargan el SVG oficial en encabezado y onboarding; el webview de VS Code reemplaza el emoji de cámara por la misma marca, mientras Activity Bar y Marketplace usan assets refinados.
+- **Wordmarks temáticos compactos**: los paneles de logo claro/oscuro se redujeron al ancho del contenido y el icono quedó centrado verticalmente.
+
+### 📦 Distribución
+
+- **Release 1.3.1**: sincronizadas las versiones de los manifiestos de Chrome y VS Code, y regenerados ambos paquetes de distribución desde los assets fuente refinados.
+
 ### ⚙️ CI/CD
 
 - **Despliegue automático a GitHub Pages** (`.github/workflows/deploy-pages.yml`): un push a `main` ahora despliega automáticamente `codeshot-web/` a la rama `gh-pages` usando `JamesIves/github-pages-deploy-action`. El workflow solo se activa cuando cambian archivos dentro de `codeshot-web/**`; los archivos existentes en `gh-pages` que no están en `codeshot-web/` (p. ej. `vendor/`) se preservan (`clean: false`). También se admite ejecución manual mediante `workflow_dispatch`.
+
+### 🐛 Corregido
+
+- **Menús de selección personalizados**: al abrir un `select-shell`, el panel acordeón ya no recorta su lista de opciones; la última alternativa queda visible y accesible.
+- **Temas Prism Funky y Coy**: se eliminaron los fondos, patrones, sombras y decoraciones de tarjeta propios de Prism que se superponían a la superficie del editor. Se mantienen los colores de resaltado de sintaxis de cada tema.
+- **SonarQube — reglas CSS `!important`**: las anulaciones específicas para Funky y Coy ya no requieren `!important`; la prioridad se resuelve mediante el orden de carga y la especificidad de los selectores.
 
 ---
 
