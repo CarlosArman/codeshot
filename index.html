@@ -13,29 +13,62 @@
   <a href="#codeInput" class="skip-link">Saltar al editor de código</a>
 
   <header class="app-header">
-    <div class="brand">
-      <span class="brand-icon" aria-hidden="true">📸</span>
-      <h1>Code<span class="brand-sub">Shot</span></h1>
+    <div class="header-start">
+      <button id="mobileMenuBtn" class="btn-icon mobile-menu-btn" type="button" aria-label="Abrir panel de edición" aria-controls="controlsPanel" aria-expanded="false"><span aria-hidden="true">☰</span></button>
+      <a class="brand" href="#" aria-label="CodeShot, inicio">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <h1>Code<span class="brand-sub">Shot</span></h1>
+        <span class="beta-badge">BETA</span>
+      </a>
+      <nav class="product-nav" aria-label="Navegación principal">
+        <button id="templatesBtn" class="nav-link" type="button">Plantillas</button>
+        <a href="#group-codigo">Temas</a>
+        <a href="#group-presets">Presets</a>
+        <a href="https://github.com/CarlosArman/codeshot#readme" target="_blank" rel="noreferrer">Recursos <span aria-hidden="true">↗</span></a>
+      </nav>
     </div>
     <div class="header-actions">
-      <button id="themeToggleBtn" class="btn-icon btn-theme-toggle" type="button" aria-label="Cambiar a tema claro" title="Cambiar tema claro/oscuro">
-        <span id="themeIcon" aria-hidden="true">🌙</span>
-      </button>
-      <button id="downloadBtn" class="btn btn-primary" type="button">
-        <span aria-hidden="true">⬇</span> Descargar PNG
-      </button>
+      <span class="workspace-status"><i aria-hidden="true"></i> Workspace listo</span>
+      <button id="themeToggleBtn" class="btn-icon btn-theme-toggle" type="button" aria-label="Cambiar a tema claro" title="Cambiar tema claro/oscuro"><span id="themeIcon" aria-hidden="true">◐</span></button>
+      <div class="share-wrapper" id="shareWrapper">
+        <button id="shareBtn" class="btn btn-ghost" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="shareDropdown"><span aria-hidden="true">↗</span> Compartir</button>
+        <div class="share-dropdown" id="shareDropdown" aria-hidden="true">
+          <button class="share-image-btn" id="shareImageBtn" type="button"><span aria-hidden="true">↗</span> Compartir imagen</button>
+          <button class="share-copy-link" id="shareCopyLink" type="button"><span aria-hidden="true">🔗</span> Copiar enlace</button>
+          <div class="share-divider"></div>
+          <p class="share-label">Publicar en</p>
+          <div class="share-social-btns">
+            <button class="share-social-btn share-x" id="shareX" type="button" aria-label="Compartir en X">𝕏</button>
+            <button class="share-social-btn share-whatsapp" id="shareWhatsapp" type="button" aria-label="Compartir por WhatsApp">◔</button>
+            <button class="share-social-btn share-linkedin" id="shareLinkedin" type="button" aria-label="Compartir en LinkedIn">in</button>
+            <button class="share-social-btn share-reddit" id="shareReddit" type="button" aria-label="Compartir en Reddit">●</button>
+            <button class="share-social-btn share-facebook" id="shareFacebook" type="button" aria-label="Compartir en Facebook">f</button>
+          </div>
+        </div>
+      </div>
+      <button id="copyImgBtn" class="btn btn-ghost copy-btn" type="button" title="Ctrl+Shift+C"><span aria-hidden="true">□</span> Copiar</button>
+      <button id="downloadBtn" class="btn btn-primary" type="button" title="Ctrl+Enter"><span aria-hidden="true">↓</span> Descargar PNG</button>
     </div>
   </header>
 
+  <output id="exportFeedback" class="export-feedback" aria-live="polite" aria-atomic="true" hidden>
+    <span id="exportFeedbackText"></span>
+    <button id="retryExportBtn" type="button" hidden>Reintentar</button>
+  </output>
   <output id="downloadStatus" class="sr-only" aria-live="polite"></output>
 
   <main class="app-main">
+    <div id="sidebarOverlay" class="sidebar-overlay" aria-hidden="true"></div>
 
     <button id="sidebarToggleBtn" class="sidebar-toggle" type="button" aria-label="Contraer panel de configuración" aria-expanded="true" aria-controls="controlsPanel">
       <span class="sidebar-toggle-icon" aria-hidden="true">‹</span>
     </button>
 
     <aside class="controls-panel" id="controlsPanel" aria-label="Panel de configuración">
+      <div class="sidebar-heading">
+        <span>Editor</span>
+        <span id="saveIndicator" class="save-indicator" data-state="saved"><i aria-hidden="true"></i><span>Guardado</span></span>
+      </div>
 
       <section class="control-group" aria-labelledby="group-ventana">
         <h2 id="group-ventana">Ventana</h2>
@@ -50,6 +83,10 @@
 
         <label for="windowTitle">Título de la ventana</label>
         <input type="text" id="windowTitle" value="untitled.js" autocomplete="off" />
+
+        <label for="frameWidth">Ancho del marco: <span id="frameWidthVal">680</span>px</label>
+        <input type="range" id="frameWidth" min="400" max="1400" value="680"
+               aria-valuemin="400" aria-valuemax="1400" aria-valuenow="680" aria-valuetext="680 píxeles" />
 
         <label class="checkbox-label">
           <input type="checkbox" id="showTitlebar" checked />
@@ -66,6 +103,15 @@
         <button id="clearCodeBtn" class="btn btn-secondary" type="button">
           <span aria-hidden="true">🗑</span> Limpiar código
         </button>
+
+        <label for="fontFamily">Familia de fuente</label>
+        <select id="fontFamily">
+          <option value="fira-code">Fira Code</option>
+          <option value="jetbrains">JetBrains Mono</option>
+          <option value="cascadia">Cascadia Code</option>
+          <option value="source-code">Source Code Pro</option>
+          <option value="consolas">Consolas</option>
+        </select>
 
         <label for="language">Lenguaje</label>
         <select id="language">
@@ -111,6 +157,11 @@
           <input type="checkbox" id="showLineNumbers" />
           Números de línea
         </label>
+
+        <label for="lineStart">Número de línea inicial</label>
+        <input type="number" id="lineStart" min="1" max="9999" value="1" />
+
+        <p id="codeStats" class="code-stats" aria-live="polite"></p>
       </section>
 
       <section class="control-group" aria-labelledby="group-fondo">
@@ -124,6 +175,13 @@
         </label>
         <label for="customBgColor" class="sr-only">Selector de color personalizado para el fondo</label>
         <input type="color" id="customBgColor" value="#6a11cb" disabled />
+
+        <div class="image-background-actions">
+          <label for="backgroundImageInput" class="btn btn-secondary">Subir imagen de fondo</label>
+          <input id="backgroundImageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden />
+          <button id="clearBackgroundImageBtn" class="btn btn-secondary" type="button" disabled>Quitar imagen</button>
+        </div>
+        <p id="backgroundImageStatus" class="background-image-status" aria-live="polite"></p>
       </section>
 
       <section class="control-group" aria-labelledby="group-apariencia">
@@ -144,19 +202,177 @@
           <input type="checkbox" id="showWatermark" />
           Marca de agua
         </label>
+        <label for="watermarkText" class="sr-only">Texto de la marca de agua</label>
+        <input type="text" id="watermarkText" value="Hecho con CodeShot" placeholder="Texto de la marca de agua" autocomplete="off" />
+      </section>
+
+      <section class="control-group" aria-labelledby="group-brand-kit">
+        <h2 id="group-brand-kit">Brand Kit</h2>
+        <p class="hint-text" style="margin-top:0;font-size:11.5px">Guarda tu identidad visual y aplícala en un clic a cada captura.</p>
+        <div class="brand-kit-save-row">
+          <input type="text" id="brandKitNameInput" placeholder="Nombre del Brand Kit…" autocomplete="off" aria-label="Nombre del Brand Kit" />
+          <button id="saveBrandKitBtn" class="btn btn-secondary" type="button" title="Guardar Brand Kit">Guardar</button>
+        </div>
+        <div id="brandKitList" class="brand-kit-list" aria-live="polite"></div>
+      </section>
+
+      <section class="control-group" aria-labelledby="group-exportacion">
+        <h2 id="group-exportacion">Exportación</h2>
+
+        <label for="exportFormat">Formato</label>
+        <select id="exportFormat">
+          <option value="png">PNG (transparencia)</option>
+          <option value="jpeg">JPEG (menor tamaño)</option>
+          <option value="webp">WEBP (óptimo para web)</option>
+        </select>
+
+        <div id="jpegQualityWrapper" style="display:none">
+          <label for="exportQuality">Calidad JPEG: <span id="exportQualityVal">90</span>%</label>
+          <input type="range" id="exportQuality" min="50" max="100" value="90"
+                 aria-valuemin="50" aria-valuemax="100" aria-valuenow="90" />
+        </div>
+
+        <fieldset class="scale-group">
+          <legend>Escala de exportación</legend>
+          <label class="scale-option"><input type="radio" name="exportScale" value="1" /> 1×</label>
+          <label class="scale-option"><input type="radio" name="exportScale" value="2" checked /> 2× (recomendado)</label>
+          <label class="scale-option"><input type="radio" name="exportScale" value="3" /> 3×</label>
+        </fieldset>
+
+        <div class="export-preflight" aria-live="polite">
+          <div class="preflight-heading">
+            <span>Preflight de exportación</span>
+            <span id="preflightStatus" class="preflight-status"><i aria-hidden="true"></i> Listo</span>
+          </div>
+          <dl class="preflight-grid">
+            <div><dt>Formato</dt><dd id="preflightFormat">PNG</dd></div>
+            <div><dt>Escala</dt><dd id="preflightScale">2×</dd></div>
+            <div><dt>Resolución</dt><dd id="preflightDimensions">—</dd></div>
+            <div><dt>Peso estimado</dt><dd id="preflightSize">Calculando…</dd></div>
+          </dl>
+          <p id="preflightHint" class="preflight-hint">PNG conserva transparencia y máxima fidelidad.</p>
+          <ul id="preflightWarnings" class="preflight-warnings" aria-live="polite"></ul>
+        </div>
+
+        <button id="exportZipBtn" class="btn btn-secondary" type="button" style="margin-top:10px">
+          <span aria-hidden="true">🗜</span> Exportar ZIP (1×/2×/3×)
+        </button>
+        <button id="exportWebPackBtn" class="btn btn-secondary" type="button">
+          <span aria-hidden="true">✦</span> Exportar Web Pack (PNG/JPG/WEBP)
+        </button>
+        <label for="exportPackSelect">Export Pack</label>
+        <select id="exportPackSelect">
+          <option value="linkedin">LinkedIn · PNG 1×/2× + WEBP 2×</option>
+          <option value="documentation">Documentación · PNG 1×/2× + WEBP 1×</option>
+          <option value="social">Social · PNG 2× + JPG/WEBP 2×</option>
+        </select>
+        <button id="exportPackBtn" class="btn btn-secondary" type="button">
+          <span aria-hidden="true">▦</span> Exportar Pack seleccionado
+        </button>
+        <div class="image-background-actions">
+          <label for="batchFilesInput" class="btn btn-secondary">Seleccionar archivos</label>
+          <input id="batchFilesInput" type="file" multiple accept=".js,.ts,.jsx,.tsx,.py,.java,.cs,.cpp,.c,.go,.rs,.php,.rb,.html,.htm,.css,.json,.sh,.sql,.yml,.yaml,.md,.txt" hidden />
+          <button id="exportBatchBtn" class="btn btn-secondary" type="button" disabled>Exportar lote</button>
+        </div>
+        <p id="batchFilesStatus" class="background-image-status" aria-live="polite">Selecciona hasta 12 archivos de código.</p>
+      </section>
+
+      <section class="control-group" aria-labelledby="group-proyectos">
+        <h2 id="group-proyectos">Proyectos</h2>
+        <p id="projectStatus" class="hint-text project-status" style="margin-top:0;font-size:11.5px">Crea un proyecto para activar el guardado automático local.</p>
+        <div class="project-save-row">
+          <input type="text" id="projectNameInput" placeholder="Nombre del proyecto…" autocomplete="off" aria-label="Nombre del proyecto" />
+          <button id="saveProjectBtn" class="btn btn-secondary" type="button" title="Crear proyecto">Crear</button>
+        </div>
+        <label for="projectCollectionInput" class="sr-only">Colección del proyecto</label>
+        <input id="projectCollectionInput" class="project-search-input" type="text" placeholder="Colección opcional…" autocomplete="off" />
+        <fieldset class="project-library-toolbar">
+          <legend class="sr-only">Filtro de biblioteca</legend>
+          <button id="showActiveProjectsBtn" class="project-filter is-active" type="button" aria-pressed="true">Activos</button>
+          <button id="showArchivedProjectsBtn" class="project-filter" type="button" aria-pressed="false">Archivados</button>
+        </fieldset>
+        <label for="projectSearchInput" class="sr-only">Buscar proyectos</label>
+        <input id="projectSearchInput" class="project-search-input" type="search" placeholder="Buscar proyectos…" autocomplete="off" />
+        <label for="projectCollectionFilter" class="sr-only">Filtrar por colección</label>
+        <select id="projectCollectionFilter" class="project-collection-filter" aria-label="Filtrar por colección">
+          <option value="">Todas las colecciones</option>
+        </select>
+        <label for="projectSortSelect" class="sr-only">Ordenar proyectos</label>
+        <select id="projectSortSelect" class="project-collection-filter" aria-label="Ordenar proyectos">
+          <option value="recent">Más recientes</option>
+          <option value="name">Nombre</option>
+          <option value="file">Archivo</option>
+        </select>
+        <div class="project-backup-actions">
+          <button id="exportProjectsBtn" class="project-filter" type="button">Exportar JSON</button>
+          <button id="importProjectsBtn" class="project-filter" type="button">Importar JSON</button>
+          <label for="importProjectsInput" class="sr-only">Importar proyectos desde archivo JSON</label>
+          <input id="importProjectsInput" type="file" accept="application/json,.json" hidden />
+        </div>
+        <div id="projectList" class="project-list" aria-live="polite"></div>
+      </section>
+
+      <section class="control-group" aria-labelledby="group-historial">
+        <h2 id="group-historial">Historial reciente</h2>
+        <div id="historyList" class="history-list"></div>
+        <button id="clearHistoryBtn" class="btn btn-secondary" type="button" style="margin-top:0">
+          <span aria-hidden="true">🗑</span> Limpiar historial
+        </button>
+      </section>
+
+      <section class="control-group" aria-labelledby="group-presets">
+        <h2 id="group-presets">Presets de estilo</h2>
+        <p class="hint-text" style="margin-top:0;font-size:11.5px">Guarda la configuración actual con un nombre para reutilizarla.</p>
+        <div class="preset-save-row">
+          <input type="text" id="presetNameInput" placeholder="Nombre del preset…" autocomplete="off" aria-label="Nombre del preset" />
+          <button id="savePresetBtn" class="btn btn-secondary" type="button" style="width:auto;margin-top:0;padding:8px 12px">💾</button>
+        </div>
+        <div id="presetList" class="preset-list"></div>
+      </section>
+
+      <section class="control-group" aria-labelledby="group-acciones">
+        <h2 id="group-acciones">Acciones</h2>
+        <p class="hint-text" style="font-size:11.5px;margin-top:0">
+          <span aria-hidden="true">⌨️</span>
+          <strong>Ctrl+S</strong> guardar proyecto · <strong>Ctrl+Enter</strong> descargar · <strong>Ctrl+Shift+C</strong> copiar · <strong>Ctrl+L</strong> limpiar
+        </p>
+        <button id="resetDefaultsBtn" class="btn btn-secondary" type="button">
+          <span aria-hidden="true">↺</span> Restaurar valores por defecto
+        </button>
       </section>
 
     </aside>
 
     <section class="preview-area" aria-label="Vista previa del código">
-      <fieldset class="zoom-controls">
-        <legend class="sr-only">Controles de zoom de la vista previa</legend>
-        <button id="zoomOut" class="btn-icon" type="button" aria-label="Reducir zoom">−</button>
-        <span id="zoomVal" aria-live="polite">100%</span>
-        <button id="zoomIn" class="btn-icon" type="button" aria-label="Aumentar zoom">+</button>
-      </fieldset>
+      <div class="workspace-topbar">
+        <div class="workspace-context" aria-label="Metadatos de la captura">
+          <span class="file-context"><span aria-hidden="true">⌘</span><strong id="contextFileName">untitled.js</strong></span>
+          <span id="contextLanguage">JavaScript</span>
+          <span id="contextTheme">Tomorrow Night</span>
+          <span id="contextWidth">680px</span>
+          <span id="contextFormat">PNG</span>
+        </div>
+        <fieldset class="zoom-controls">
+          <legend class="sr-only">Controles de encuadre de la vista previa</legend>
+          <button id="fitScreenBtn" class="viewport-action" type="button">Ajustar</button>
+          <button id="centerStageBtn" class="viewport-action" type="button">Centrar</button>
+          <span class="toolbar-divider" aria-hidden="true"></span>
+          <button id="zoomOut" class="btn-icon" type="button" aria-label="Reducir zoom">−</button>
+          <span id="zoomVal" aria-live="polite">100%</span>
+          <button id="zoomIn" class="btn-icon" type="button" aria-label="Aumentar zoom">+</button>
+          <button id="resetZoomBtn" class="btn-icon reset-zoom" type="button" aria-label="Restablecer zoom" title="Restablecer zoom">↺</button>
+        </fieldset>
+      </div>
+      <div class="workspace-empty-hint" aria-hidden="true"><span>⌘</span> Selecciona la captura para editar estilos</div>
 
       <div class="stage-wrapper">
+        <div id="quickActions" class="quick-actions" aria-label="Acciones rápidas de la captura">
+          <button type="button" data-target="group-fondo"><span aria-hidden="true">✦</span> Fondo</button>
+          <button type="button" data-target="group-apariencia" data-focus="radius"><span aria-hidden="true">◌</span> Radio</button>
+          <button type="button" data-target="group-apariencia" data-focus="shadow"><span aria-hidden="true">☾</span> Sombra</button>
+          <button type="button" data-target="group-apariencia" data-focus="padding"><span aria-hidden="true">↔</span> Padding</button>
+          <button type="button" data-target="group-presets"><span aria-hidden="true">▣</span> Guardar</button>
+        </div>
         <div id="exportStage" class="export-stage">
           <div id="windowFrame" class="window-frame frame-mac">
             <div id="titlebar" class="titlebar">
@@ -209,6 +425,45 @@
 
   </main>
 
+  <dialog id="onboardingDialog" class="onboarding-dialog" aria-labelledby="onboardingTitle">
+    <div class="onboarding-brand"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span> CodeShot</div>
+    <p class="eyebrow">Tu primera captura en menos de 30 segundos</p>
+    <h2 id="onboardingTitle">¿Dónde vas a publicar?</h2>
+    <p class="onboarding-description">Selecciona un destino y prepararemos un canvas con proporciones y estilo recomendados.</p>
+    <div id="onboardingDestinations" class="onboarding-destinations">
+      <button type="button" data-template="linkedin"><b>in</b><span>LinkedIn<small>Post profesional</small></span></button>
+      <button type="button" data-template="github"><b>⌘</b><span>GitHub<small>README o issue</small></span></button>
+      <button type="button" data-template="blog"><b>✎</b><span>Blog<small>Hero editorial</small></span></button>
+      <button type="button" data-template="slide"><b>▣</b><span>Presentación<small>Conference slide</small></span></button>
+      <button type="button" data-template="social"><b>𝕏</b><span>Social<small>Post para X</small></span></button>
+      <button type="button" data-template="story"><b>◉</b><span>Story<small>Formato vertical</small></span></button>
+    </div>
+    <button id="skipOnboardingBtn" class="onboarding-skip" type="button">Empezar desde cero</button>
+  </dialog>
+
+  <dialog id="templateDialog" class="template-dialog" aria-labelledby="templateDialogTitle">
+    <div class="dialog-header">
+      <div><p class="eyebrow">Comienza con una intención</p><h2 id="templateDialogTitle">Plantillas de captura</h2></div>
+      <button id="closeTemplatesBtn" class="btn-icon" type="button" aria-label="Cerrar plantillas">×</button>
+    </div>
+    <fieldset id="templateFilters" class="template-filters">
+      <legend class="sr-only">Filtrar plantillas</legend>
+      <button type="button" class="is-active" data-template-filter="all" aria-pressed="true">Todas</button>
+      <button type="button" data-template-filter="professional" aria-pressed="false">Profesional</button>
+      <button type="button" data-template-filter="documentation" aria-pressed="false">Documentación</button>
+      <button type="button" data-template-filter="social" aria-pressed="false">Social</button>
+      <button type="button" data-template-filter="vertical" aria-pressed="false">Vertical</button>
+    </fieldset>
+    <div id="templateGallery" class="template-gallery">
+      <button class="template-card is-featured" type="button" data-template="linkedin" data-template-category="professional"><span class="template-preview linkedin-preview"></span><strong>LinkedIn Post</strong><small>1200 × 627 · Profesional</small></button>
+      <button class="template-card" type="button" data-template="github" data-template-category="documentation"><span class="template-preview github-preview"></span><strong>GitHub README</strong><small>1280 × 720 · Documentación</small></button>
+      <button class="template-card" type="button" data-template="blog" data-template-category="professional"><span class="template-preview blog-preview"></span><strong>Blog Hero</strong><small>1600 × 900 · Editorial</small></button>
+      <button class="template-card" type="button" data-template="slide" data-template-category="professional"><span class="template-preview slide-preview"></span><strong>Conference Slide</strong><small>1920 × 1080 · Presentación</small></button>
+      <button class="template-card" type="button" data-template="social" data-template-category="social"><span class="template-preview social-preview"></span><strong>Twitter / X</strong><small>1600 × 900 · Social</small></button>
+      <button class="template-card" type="button" data-template="story" data-template-category="social vertical"><span class="template-preview story-preview"></span><strong>Instagram Story</strong><small>1080 × 1920 · Vertical</small></button>
+    </div>
+  </dialog>
+
   <script src="vendor/prism/prism.min.js"></script>
   <script src="vendor/prism/components/prism-markup.min.js"></script>
   <script src="vendor/prism/components/prism-css.min.js"></script>
@@ -232,6 +487,6 @@
   <script src="vendor/prism/components/prism-yaml.min.js"></script>
   <script src="vendor/prism/components/prism-markdown.min.js"></script>
   <script src="vendor/html2canvas/html2canvas.min.js"></script>
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
