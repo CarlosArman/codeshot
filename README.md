@@ -1,7 +1,7 @@
 # 📸 CodeShot
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.2.0-blueviolet" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-1.3.0-blueviolet" alt="Version" />
   <img src="https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white" alt="HTML5" />
   <img src="https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white" alt="CSS3" />
   <img src="https://img.shields.io/badge/JavaScript-Vanilla-F7DF1E?logo=javascript&logoColor=black" alt="JavaScript" />
@@ -77,9 +77,13 @@ The solution combines:
 - ✅ Frame width control (400–1400 px) and monospace font family selector.
 - ✅ Predefined gradient backgrounds or custom color.
 - ✅ Export as **PNG** (real transparency) or **JPEG** (adjustable quality) at 1×/2×/3×.
+- ✅ Export packs for LinkedIn, Documentation, and Social, with deterministic ZIP names and WEBP-to-PNG fallback.
+- ✅ Batch-process up to 12 code files into a sequential PNG 2× ZIP, preserving the active visual composition.
 - ✅ Copy image to clipboard with one click (`ClipboardItem` API).
 - ✅ Share by link and named style presets (web version).
 - ✅ Social media sharing: X/Twitter, WhatsApp, LinkedIn, Reddit, Facebook + Web Share API (mobile native share sheet).
+- ✅ Persistent project library: autosave, recent versions, collections, search, archive/restore, JSON backup/import, and real project thumbnails.
+- ✅ Versioned local project storage with IndexedDB, automatically migrated from and backed by a resilient `localStorage` cache.
 - ✅ Full preference persistence in `localStorage`.
 - ✅ Automatic language detection on paste + file drag & drop.
 - ✅ Light/dark UI theme.
@@ -104,6 +108,7 @@ The solution combines:
 - **Language**: HTML5, CSS3, JavaScript (vanilla, no frameworks)
 - **Syntax highlighting**: [Prism.js](https://prismjs.com/)
 - **Image export**: [html2canvas](https://html2canvas.hertzen.com/)
+- **Project library storage**: IndexedDB with `localStorage` fallback/cache
 - **Browser extension**: Chrome Extension API (Manifest V3)
 - **Editor extension**: VS Code Extension API (WebviewPanel, Commands)
 - **Packaging**: `Compress-Archive` (Chrome), `@vscode/vsce` (VS Code)
@@ -243,7 +248,7 @@ CodeShot follows a **layered vanilla JS architecture**, with no build step:
 
 - `index.html` / `webview.html` — semantic UI structure.
 - `style.css` — all styles, including iconography drawn with CSS pseudo-elements (no SVG or emoji).
-- `script.js` — shared UI logic: syntax highlighting, appearance controls, PNG export.
+- `script.js` — shared UI logic: syntax highlighting, appearance controls, export, project library, thumbnail generation, and IndexedDB persistence.
 - `manifest.json` + `background.js` — Chrome-specific layer (Manifest V3, service worker).
 - `extension.js` — VS Code-specific layer (WebviewPanel, commands, message bridge with the webview).
 - `vendor/` — third-party dependencies (Prism.js, html2canvas) copied locally to work 100% offline and comply with Content Security Policy.
@@ -258,6 +263,7 @@ CodeShot follows a **layered vanilla JS architecture**, with no build step:
 - [ ] Publish the extension on the VS Code Marketplace.
 - [x] Local history of generated screenshots.
 - [x] Multi-resolution ZIP export.
+- [x] Persistent project library with thumbnails, backups, and versioned local storage.
 
 ---
 

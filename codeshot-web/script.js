@@ -8,6 +8,7 @@ function writePreference(key, value) {
 function clearAllPreferences() {
   try {
     Object.keys(localStorage).filter(k => k.startsWith('codeshot-')).forEach(k => localStorage.removeItem(k));
+    window.indexedDB?.deleteDatabase('codeshot-library');
   } catch { /* noop */ }
 }
 
@@ -96,6 +97,10 @@ const codeStatsEl      = document.getElementById('codeStats');
 const bgSwatchesContainer = document.getElementById('bgSwatches');
 const customBgToggle   = document.getElementById('customBgToggle');
 const customBgColor    = document.getElementById('customBgColor');
+const backgroundImageInput = document.getElementById('backgroundImageInput');
+const clearBackgroundImageBtn = document.getElementById('clearBackgroundImageBtn');
+const backgroundImageStatus = document.getElementById('backgroundImageStatus');
+let backgroundImageUrl = null;
 
 const paddingInput     = document.getElementById('padding');
 const paddingVal       = document.getElementById('paddingVal');
@@ -111,10 +116,307 @@ const exportStage      = document.getElementById('exportStage');
 const downloadBtn      = document.getElementById('downloadBtn');
 const copyImgBtn       = document.getElementById('copyImgBtn');
 const downloadStatus   = document.getElementById('downloadStatus');
+const exportFeedback   = document.getElementById('exportFeedback');
+const exportFeedbackText = document.getElementById('exportFeedbackText');
+const retryExportBtn   = document.getElementById('retryExportBtn');
+const saveIndicator    = document.getElementById('saveIndicator');
+let retryExportAction = null;
 
 const zoomInBtn        = document.getElementById('zoomIn');
 const zoomOutBtn       = document.getElementById('zoomOut');
 const zoomValText      = document.getElementById('zoomVal');
+const resetZoomBtn     = document.getElementById('resetZoomBtn');
+const fitScreenBtn     = document.getElementById('fitScreenBtn');
+const centerStageBtn   = document.getElementById('centerStageBtn');
+const previewArea      = document.querySelector('.preview-area');
+const stageWrapper     = document.querySelector('.stage-wrapper');
+const mobileMenuBtn    = document.getElementById('mobileMenuBtn');
+const sidebarOverlay   = document.getElementById('sidebarOverlay');
+const contextFileName  = document.getElementById('contextFileName');
+const contextLanguage  = document.getElementById('contextLanguage');
+const contextTheme     = document.getElementById('contextTheme');
+const contextWidth     = document.getElementById('contextWidth');
+const contextFormat    = document.getElementById('contextFormat');
+const quickActions     = document.getElementById('quickActions');
+const templatesBtn     = document.getElementById('templatesBtn');
+const templateDialog   = document.getElementById('templateDialog');
+const closeTemplatesBtn = document.getElementById('closeTemplatesBtn');
+const templateGallery  = document.getElementById('templateGallery');
+const templateFilters  = document.getElementById('templateFilters');
+const onboardingDialog = document.getElementById('onboardingDialog');
+const onboardingDestinations = document.getElementById('onboardingDestinations');
+const skipOnboardingBtn = document.getElementById('skipOnboardingBtn');
+const ONBOARDING_STORAGE_KEY = 'codeshot-onboarding-complete';
+
+// ============ Componentes de interfaz ============
+const SELECT_ICONS = {
+  mac: '●', windows: '⊞', browser: '◉', ubuntu: '◒', none: '—',
+  javascript: 'JS', typescript: 'TS', jsx: '⚛', python: 'PY', java: '☕',
+  csharp: 'C#', cpp: 'C++', c: 'C', go: 'GO', rust: 'Rs', php: 'PHP',
+  ruby: '♦', markup: '⌘', css: 'CSS', json: '{}', bash: '$', sql: '⌗',
+  yaml: 'YML', markdown: 'MD', png: 'PNG', jpeg: 'JPG',
+  'fira-code': 'ƒ', jetbrains: 'JB', cascadia: '⌁', 'source-code': 'SC', consolas: 'C',
+  tomorrow: '◐', okaidia: '◒', dark: '●', twilight: '◑', funky: '✦',
+  default: '☼', coy: '◌', solarizedlight: '☀', onelight: '◍'
+};
+
+function closeCustomSelects(except = null) {
+  document.querySelectorAll('.select-shell.open').forEach(shell => {
+    if (shell !== except) {
+      shell.classList.remove('open');
+      shell.querySelector('.select-shell__button')?.setAttribute('aria-expanded', 'false');
+    }
+  });
+}
+
+function syncCustomSelect(select) {
+  const shell = select?.nextElementSibling;
+  if (!shell?.classList.contains('select-shell')) return;
+  const option = select.options[select.selectedIndex];
+  shell.querySelector('.select-shell__value').textContent = option?.textContent ?? '';
+  shell.querySelectorAll('.select-shell__option').forEach(item => {
+    item.setAttribute('aria-selected', item.dataset.value === select.value ? 'true' : 'false');
+  });
+}
+
+function enhanceSelects() {
+  document.querySelectorAll('.control-group select').forEach(select => {
+    if (select.dataset.enhanced) return;
+    select.dataset.enhanced = 'true';
+    const shell = document.createElement('div');
+    const listId = `${select.id}-options`;
+    shell.className = 'select-shell';
+    shell.innerHTML = `<button class="select-shell__button" type="button" aria-haspopup="listbox" aria-expanded="false" aria-controls="${listId}"><span class="select-shell__value"></span><span class="select-shell__chevron" aria-hidden="true">⌄</span></button><div class="select-shell__list" id="${listId}" role="listbox"></div>`;
+    const button = shell.querySelector('.select-shell__button');
+    const list = shell.querySelector('.select-shell__list');
+
+    [...select.options].forEach(option => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'select-shell__option';
+      item.dataset.value = option.value;
+      item.setAttribute('role', 'option');
+      item.innerHTML = `<span aria-hidden="true">${SELECT_ICONS[option.value] ?? '•'}</span>&nbsp; ${option.textContent}`;
+      item.addEventListener('click', () => {
+        select.value = option.value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        syncCustomSelect(select);
+        closeCustomSelects();
+        button.focus();
+      });
+      list.appendChild(item);
+    });
+
+    button.addEventListener('click', () => {
+      const willOpen = !shell.classList.contains('open');
+      closeCustomSelects(shell);
+      shell.classList.toggle('open', willOpen);
+      button.setAttribute('aria-expanded', String(willOpen));
+      if (willOpen) list.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
+    });
+    button.addEventListener('keydown', event => {
+      const items = [...list.querySelectorAll('.select-shell__option')];
+      const current = items.findIndex(item => item.dataset.value === select.value);
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        const next = event.key === 'ArrowDown' ? (current + 1) % items.length : (current - 1 + items.length) % items.length;
+        select.value = items[next].dataset.value;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        syncCustomSelect(select);
+      } else if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        button.click();
+      } else if (event.key === 'Escape') {
+        closeCustomSelects();
+      }
+    });
+    select.after(shell);
+    select.addEventListener('change', () => syncCustomSelect(select));
+    syncCustomSelect(select);
+  });
+  document.addEventListener('click', event => {
+    if (!event.target.closest('.select-shell')) closeCustomSelects();
+  });
+}
+
+function setupAccordions() {
+  const storageKey = 'codeshot-collapsed-panels';
+  let collapsed = [];
+  try { collapsed = JSON.parse(readPreference(storageKey) ?? '[]'); } catch { collapsed = []; }
+
+  document.querySelectorAll('.control-group').forEach((group, index) => {
+    const heading = group.querySelector(':scope > h2');
+    if (!heading || group.querySelector('.control-group-content')) return;
+    const content = document.createElement('div');
+    const inner = document.createElement('div');
+    const contentId = `control-group-content-${index}`;
+    content.className = 'control-group-content';
+    content.id = contentId;
+    while (heading.nextSibling) inner.appendChild(heading.nextSibling);
+    content.appendChild(inner);
+    group.appendChild(content);
+    heading.setAttribute('role', 'button');
+    heading.setAttribute('tabindex', '0');
+    heading.setAttribute('aria-controls', contentId);
+    const groupId = heading.id || `group-${index}`;
+    const setState = isCollapsed => {
+      group.classList.toggle('collapsed', isCollapsed);
+      heading.setAttribute('aria-expanded', String(!isCollapsed));
+      collapsed = isCollapsed ? [...new Set([...collapsed, groupId])] : collapsed.filter(id => id !== groupId);
+      writePreference(storageKey, JSON.stringify(collapsed));
+    };
+    setState(collapsed.includes(groupId));
+    heading.addEventListener('click', () => setState(!group.classList.contains('collapsed')));
+    heading.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        heading.click();
+      }
+    });
+  });
+}
+
+function setMobileSidebar(open) {
+  if (!appMain) return;
+  appMain.classList.toggle('sidebar-mobile-open', open);
+  mobileMenuBtn?.setAttribute('aria-expanded', String(open));
+  sidebarOverlay?.setAttribute('aria-hidden', String(!open));
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+
+function updateRangeProgress(input) {
+  const min = Number(input.min || 0);
+  const max = Number(input.max || 100);
+  const progress = ((Number(input.value) - min) / (max - min)) * 100;
+  input.style.setProperty('--range-progress', `${progress}%`);
+}
+
+function updateWorkspaceContext() {
+  const exportFormat = document.getElementById('exportFormat');
+  if (contextFileName) contextFileName.textContent = windowTitleInput?.value || 'untitled';
+  if (contextLanguage) contextLanguage.textContent = languageSel?.options[languageSel.selectedIndex]?.textContent || 'Código';
+  if (contextTheme) contextTheme.textContent = codeThemeSel?.options[codeThemeSel.selectedIndex]?.textContent || 'Tema';
+  if (contextWidth) contextWidth.textContent = `${frameWidthInput?.value || 680}px`;
+  if (contextFormat) contextFormat.textContent = (exportFormat?.value || 'png').toUpperCase();
+}
+
+function revealControlGroup(groupId, focusId) {
+  const heading = document.getElementById(groupId);
+  const group = heading?.closest('.control-group');
+  if (!heading || !group) return;
+  if (group.classList.contains('collapsed')) heading.click();
+  group.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  if (focusId) setTimeout(() => document.getElementById(focusId)?.focus({ preventScroll: true }), 220);
+}
+
+const TEMPLATE_STYLES = {
+  linkedin: { frameWidth: 920, padding: 72, radius: 16, shadow: 65, background: 'linear-gradient(135deg, #312e81, #7c3aed 55%, #c4b5fd)' },
+  github: { frameWidth: 860, padding: 56, radius: 10, shadow: 48, background: 'linear-gradient(135deg, #111827, #374151)' },
+  blog: { frameWidth: 1040, padding: 84, radius: 18, shadow: 60, background: 'linear-gradient(135deg, #f97316, #fb7185)' },
+  slide: { frameWidth: 1140, padding: 88, radius: 12, shadow: 70, background: 'linear-gradient(135deg, #0f766e, #22d3ee)' },
+  social: { frameWidth: 1000, padding: 72, radius: 14, shadow: 62, background: 'linear-gradient(135deg, #2563eb, #60a5fa)' },
+  story: { frameWidth: 580, padding: 74, radius: 18, shadow: 65, background: 'linear-gradient(180deg, #ec4899, #7c3aed 55%, #1e1b4b)' }
+};
+
+function applyTemplate(name) {
+  const template = TEMPLATE_STYLES[name];
+  if (!template) return;
+  frameWidthInput.value = template.frameWidth;
+  paddingInput.value = template.padding;
+  radiusInput.value = template.radius;
+  shadowInput.value = template.shadow;
+  [frameWidthInput, paddingInput, radiusInput, shadowInput].forEach(input => input.dispatchEvent(new Event('input', { bubbles: true })));
+  applyBackground(template.background);
+  document.querySelectorAll('.template-card').forEach(card => card.classList.toggle('is-featured', card.dataset.template === name));
+  saveAllPreferences();
+  updateWorkspaceContext();
+  templateDialog?.close();
+  requestAnimationFrame(fitStageToViewport);
+}
+
+function completeOnboarding() {
+  writePreference(ONBOARDING_STORAGE_KEY, '1');
+  onboardingDialog?.close();
+}
+
+function setupOnboarding() {
+  if (readPreference(ONBOARDING_STORAGE_KEY) !== '1') {
+    requestAnimationFrame(() => onboardingDialog?.showModal());
+  }
+  onboardingDestinations?.addEventListener('click', event => {
+    const destination = event.target.closest('button[data-template]');
+    if (!destination) return;
+    applyTemplate(destination.dataset.template);
+    completeOnboarding();
+  });
+  skipOnboardingBtn?.addEventListener('click', completeOnboarding);
+}
+
+function applyTemplateFilter(filter) {
+  templateFilters?.querySelectorAll('button[data-template-filter]').forEach(button => {
+    const selected = button.dataset.templateFilter === filter;
+    button.classList.toggle('is-active', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
+  templateGallery?.querySelectorAll('.template-card').forEach(card => {
+    const categories = (card.dataset.templateCategory ?? '').split(' ');
+    card.hidden = filter !== 'all' && !categories.includes(filter);
+  });
+}
+
+function setupProductInteractions() {
+  setupOnboarding();
+  quickActions?.addEventListener('click', event => {
+    const action = event.target.closest('button[data-target]');
+    if (action) revealControlGroup(action.dataset.target, action.dataset.focus);
+  });
+  templatesBtn?.addEventListener('click', () => templateDialog?.showModal());
+  closeTemplatesBtn?.addEventListener('click', () => templateDialog?.close());
+  templateGallery?.addEventListener('click', event => {
+    const card = event.target.closest('.template-card');
+    if (card) applyTemplate(card.dataset.template);
+  });
+  templateFilters?.addEventListener('click', event => {
+    const filter = event.target.closest('button[data-template-filter]');
+    if (filter) applyTemplateFilter(filter.dataset.templateFilter);
+  });
+  templateDialog?.addEventListener('click', event => {
+    if (event.target === templateDialog) templateDialog.close();
+  });
+}
+
+function setupInterfaceComponents() {
+  setupAccordions();
+  enhanceSelects();
+  setupProductInteractions();
+  document.querySelectorAll('#windowTitle, #language, #codeTheme, #frameWidth, #exportFormat').forEach(element => {
+    element.addEventListener('input', updateWorkspaceContext);
+    element.addEventListener('change', updateWorkspaceContext);
+  });
+  updateWorkspaceContext();
+  document.querySelectorAll('input[type="range"]').forEach(input => {
+    updateRangeProgress(input);
+    input.addEventListener('input', () => updateRangeProgress(input));
+  });
+  mobileMenuBtn?.addEventListener('click', () => setMobileSidebar(!appMain?.classList.contains('sidebar-mobile-open')));
+  sidebarOverlay?.addEventListener('click', () => setMobileSidebar(false));
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 760) setMobileSidebar(false);
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
+      closeCustomSelects();
+      setMobileSidebar(false);
+      return;
+    }
+    const target = event.target;
+    const isTyping = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || target?.isContentEditable;
+    if (!isTyping && event.key.toLowerCase() === 't' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      event.preventDefault();
+      templateDialog?.showModal();
+    }
+  });
+}
 
 // ============ Estado ============
 let zoomLevel = 1;
@@ -180,6 +482,10 @@ const BACKGROUNDS = [
   'linear-gradient(135deg, #2b5876, #4e4376)',
   'linear-gradient(135deg, #000000, #434343)',
   'linear-gradient(135deg, #c31432, #240b36)',
+  'linear-gradient(135deg, rgba(255,255,255,.32), rgba(255,255,255,.04)), linear-gradient(135deg, #1e3a8a, #7c3aed)',
+  'radial-gradient(circle at 18% 22%, #f472b6 0 9%, transparent 30%), radial-gradient(circle at 80% 16%, #60a5fa 0 12%, transparent 35%), radial-gradient(circle at 52% 78%, #a78bfa 0 16%, #111827 58%)',
+  'repeating-linear-gradient(45deg, rgba(255,255,255,.07) 0 1px, transparent 1px 7px), linear-gradient(135deg, #0f172a, #334155)',
+  'conic-gradient(from 210deg at 50% 50%, #ec4899, #7c3aed, #0ea5e9, #ec4899)',
   '#ffffff',
   '#000000'
 ];
@@ -253,7 +559,7 @@ function restoreFramePrefs() {
   if (frameWidth && frameWidthInput) {
     frameWidthInput.value = frameWidth;
     if (frameWidthVal) frameWidthVal.textContent = frameWidth;
-    if (windowFrame) windowFrame.style.minWidth = frameWidth + 'px';
+    if (windowFrame) windowFrame.style.setProperty('--frame-width', frameWidth + 'px');
   }
   const showTitlebar = readPreference('codeshot-showTitlebar');
   if (showTitlebar !== null && showTitlebarChk) showTitlebarChk.checked = showTitlebar === '1';
@@ -363,7 +669,11 @@ function renderBgSwatches() {
     sw.style.background = bg;
     if (bg === '#ffffff' || bg === '#000000') sw.classList.add('swatch-solid');
     let swatchLabel = 'Fondo degradado de color';
-    if (bg === '#ffffff') { swatchLabel = 'Fondo blanco sólido'; }
+    if (idx === 10) swatchLabel = 'Fondo Glass azul violeta';
+    else if (idx === 11) swatchLabel = 'Fondo Mesh rosa y azul';
+    else if (idx === 12) swatchLabel = 'Fondo Noise oscuro';
+    else if (idx === 13) swatchLabel = 'Fondo Abstract cónico';
+    else if (bg === '#ffffff') { swatchLabel = 'Fondo blanco sólido'; }
     else if (bg === '#000000') { swatchLabel = 'Fondo negro sólido'; }
     makeSwatchAccessible(sw, swatchLabel, idx === 0);
     if (idx === 0) sw.classList.add('active');
@@ -406,7 +716,41 @@ function setupSwatchKeyboardNavigation() {
   });
 }
 
+function clearBackgroundImage() {
+  if (!backgroundImageUrl) return;
+  URL.revokeObjectURL(backgroundImageUrl);
+  backgroundImageUrl = null;
+  if (backgroundImageInput) backgroundImageInput.value = '';
+  if (clearBackgroundImageBtn) clearBackgroundImageBtn.disabled = true;
+  if (backgroundImageStatus) backgroundImageStatus.textContent = '';
+  exportStage?.classList.remove('bg-image');
+}
+
+function applyBackgroundImage(file) {
+  const supportedTypes = new Set(['image/png', 'image/jpeg', 'image/webp']);
+  if (!file || !supportedTypes.has(file.type) || file.size > 8 * 1024 * 1024) {
+    if (backgroundImageStatus) backgroundImageStatus.textContent = 'Selecciona una imagen PNG, JPG o WEBP de hasta 8 MB.';
+    return;
+  }
+  clearBackgroundImage();
+  backgroundImageUrl = URL.createObjectURL(file);
+  if (exportStage) {
+    exportStage.classList.remove('bg-none');
+    exportStage.classList.add('bg-image');
+    exportStage.style.backgroundImage = `url("${backgroundImageUrl}")`;
+    exportStage.style.backgroundSize = 'cover';
+    exportStage.style.backgroundPosition = 'center';
+  }
+  if (customBgToggle) customBgToggle.checked = false;
+  if (customBgColor) customBgColor.disabled = true;
+  document.querySelectorAll('.swatch').forEach(s => { s.classList.remove('active'); s.setAttribute('aria-checked', 'false'); });
+  if (clearBackgroundImageBtn) clearBackgroundImageBtn.disabled = false;
+  if (backgroundImageStatus) backgroundImageStatus.textContent = `${file.name} aplicado temporalmente a esta sesión.`;
+  requestAnimationFrame(updateExportPreflight);
+}
+
 function selectSwatch(el, bgValue) {
+  clearBackgroundImage();
   document.querySelectorAll('.swatch').forEach(s => { s.classList.remove('active'); s.setAttribute('aria-checked','false'); s.setAttribute('tabindex','-1'); });
   el.classList.add('active'); el.setAttribute('aria-checked','true'); el.setAttribute('tabindex','0');
   if (customBgToggle) customBgToggle.checked = false;
@@ -416,9 +760,13 @@ function selectSwatch(el, bgValue) {
 
 function applyBackground(bgValue) {
   if (!exportStage) return;
+  if (backgroundImageUrl) clearBackgroundImage();
+  exportStage.classList.remove('bg-image');
+  exportStage.style.backgroundImage = '';
   if (bgValue === NONE_BG_VALUE) { exportStage.style.background = ''; exportStage.classList.add('bg-none'); }
   else { exportStage.classList.remove('bg-none'); exportStage.style.background = bgValue; }
   updateWatermarkColor();
+  requestAnimationFrame(updateExportPreflight);
 }
 
 function updateWatermarkColor() {
@@ -443,9 +791,9 @@ function scheduleSyncTextareaSize() {
 }
 
 function updateCodeStats() {
-  if (!codeStatsEl) return;
   const code = codeInput?.value ?? '';
-  codeStatsEl.textContent = `${code.split('\n').length} líneas · ${code.length} caracteres`;
+  if (codeStatsEl) codeStatsEl.textContent = `${code.split('\n').length} líneas · ${code.length} caracteres`;
+  requestAnimationFrame(updateExportPreflight);
 }
 
 function updateLineNumbers() {
@@ -564,6 +912,7 @@ if (fontFamilySel) {
     applyFontFamily(fontFamilySel.value);
     scheduleSyncTextareaSize();
     saveAllPreferences();
+    updateExportPreflight();
   });
 }
 
@@ -595,7 +944,7 @@ if (frameWidthInput) {
   frameWidthInput.addEventListener('input', () => {
     const w = frameWidthInput.value;
     if (frameWidthVal) { frameWidthVal.textContent = w; }
-    if (windowFrame) { windowFrame.style.minWidth = w + 'px'; }
+    if (windowFrame) { windowFrame.style.setProperty('--frame-width', w + 'px'); }
     saveAllPreferences();
   });
 }
@@ -624,6 +973,12 @@ if (customBgColor) {
     saveAllPreferences();
   });
 }
+backgroundImageInput?.addEventListener('change', event => applyBackgroundImage(event.target.files?.[0]));
+clearBackgroundImageBtn?.addEventListener('click', () => {
+  clearBackgroundImage();
+  applyBackground(bgSwatchesContainer?.querySelector('.swatch.active')?.style.background || BACKGROUNDS[0]);
+});
+window.addEventListener('beforeunload', clearBackgroundImage);
 
 if (paddingInput) {
   paddingInput.addEventListener('input', () => {
@@ -664,32 +1019,76 @@ function applyZoom() {
   if (exportStage) { exportStage.style.transform = `scale(${zoomLevel})`; }
   if (zoomValText) { zoomValText.textContent = Math.round(zoomLevel * 100) + '%'; }
 }
+
+function fitStageToViewport() {
+  if (!exportStage || !previewArea) return;
+  const maxWidth = Math.max(previewArea.clientWidth - 94, 180);
+  const maxHeight = Math.max(previewArea.clientHeight - 132, 180);
+  const widthRatio = maxWidth / exportStage.offsetWidth;
+  const heightRatio = maxHeight / exportStage.offsetHeight;
+  zoomLevel = Math.max(0.3, Math.min(1, widthRatio, heightRatio));
+  applyZoom();
+}
+
+function centerStage() {
+  stageWrapper?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+  requestAnimationFrame(() => {
+    if (!previewArea || !stageWrapper) return;
+    previewArea.scrollLeft = Math.max(0, (stageWrapper.scrollWidth - previewArea.clientWidth) / 2);
+  });
+}
+
 if (zoomInBtn) zoomInBtn.addEventListener('click', () => { zoomLevel = Math.min(2, zoomLevel + 0.1); applyZoom(); });
 if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => { zoomLevel = Math.max(0.3, zoomLevel - 0.1); applyZoom(); });
+if (resetZoomBtn) resetZoomBtn.addEventListener('click', () => { zoomLevel = 1; applyZoom(); });
+if (fitScreenBtn) fitScreenBtn.addEventListener('click', fitStageToViewport);
+if (centerStageBtn) centerStageBtn.addEventListener('click', centerStage);
 
 // ============ Controles de exportación ============
 const exportFormatSel    = document.getElementById('exportFormat');
 const jpegQualityWrapper = document.getElementById('jpegQualityWrapper');
 const exportQualityInput = document.getElementById('exportQuality');
 const exportQualityVal   = document.getElementById('exportQualityVal');
+const preflightFormat    = document.getElementById('preflightFormat');
+const preflightScale     = document.getElementById('preflightScale');
+const preflightDimensions = document.getElementById('preflightDimensions');
+const preflightSize      = document.getElementById('preflightSize');
+const preflightHint      = document.getElementById('preflightHint');
+const preflightWarnings  = document.getElementById('preflightWarnings');
+const preflightStatus    = document.getElementById('preflightStatus');
 const shareBtn           = document.getElementById('shareBtn');
+let realPreflightTimer = null;
+let realPreflightToken = 0;
 const presetNameInput    = document.getElementById('presetNameInput');
 const savePresetBtn      = document.getElementById('savePresetBtn');
 const presetList         = document.getElementById('presetList');
 const PRESETS_KEY        = 'codeshot-presets';
+const brandKitNameInput  = document.getElementById('brandKitNameInput');
+const saveBrandKitBtn    = document.getElementById('saveBrandKitBtn');
+const brandKitList       = document.getElementById('brandKitList');
+const BRAND_KITS_KEY     = 'codeshot-brand-kits';
+const PROJECTS_KEY       = 'codeshot-projects';
+const ACTIVE_PROJECT_KEY = 'codeshot-active-project-id';
+const projectNameInput   = document.getElementById('projectNameInput');
+const saveProjectBtn     = document.getElementById('saveProjectBtn');
+const projectList        = document.getElementById('projectList');
+const projectStatus      = document.getElementById('projectStatus');
+const showActiveProjectsBtn = document.getElementById('showActiveProjectsBtn');
+const showArchivedProjectsBtn = document.getElementById('showArchivedProjectsBtn');
+const projectSearchInput = document.getElementById('projectSearchInput');
+const projectCollectionInput = document.getElementById('projectCollectionInput');
+const projectCollectionFilter = document.getElementById('projectCollectionFilter');
+const projectSortSelect = document.getElementById('projectSortSelect');
+const exportProjectsBtn = document.getElementById('exportProjectsBtn');
+const importProjectsBtn = document.getElementById('importProjectsBtn');
+const importProjectsInput = document.getElementById('importProjectsInput');
+let projectLibraryView = 'active';
+let projectAutosaveTimer = null;
 
-if (exportFormatSel) {
-  exportFormatSel.addEventListener('change', () => {
-    const isJpeg = exportFormatSel.value === 'jpeg';
-    if (jpegQualityWrapper) jpegQualityWrapper.style.display = isJpeg ? '' : 'none';
-    if (downloadBtn) downloadBtn.innerHTML = `<span aria-hidden="true">⬇</span> Descargar ${isJpeg ? 'JPEG' : 'PNG'}`;
-  });
-}
-
-if (exportQualityInput) {
-  exportQualityInput.addEventListener('input', () => {
-    if (exportQualityVal) exportQualityVal.textContent = exportQualityInput.value;
-  });
+function formatFileSize(bytes) {
+  if (bytes < 1024) return `${Math.round(bytes)} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(bytes < 10240 ? 1 : 0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function getExportFormat() { return exportFormatSel?.value ?? 'png'; }
@@ -699,6 +1098,132 @@ function getExportScale() {
   return Number.parseInt(checked?.value ?? '2', 10);
 }
 
+function getExportCompression(format) {
+  const compressionByFormat = { png: 0.34, jpeg: 0.16, webp: 0.12 };
+  return compressionByFormat[format] ?? compressionByFormat.png;
+}
+
+function supportsWebp() {
+  try {
+    const canvas = document.createElement('canvas');
+    return canvas.toDataURL('image/webp').startsWith('data:image/webp');
+  } catch {
+    return false;
+  }
+}
+
+const FONT_PRELIGHT_NAMES = {
+  'fira-code': 'Fira Code',
+  jetbrains: 'JetBrains Mono',
+  cascadia: 'Cascadia Code',
+  'source-code': 'Source Code Pro',
+  consolas: 'Consolas'
+};
+
+function isSelectedFontAvailable() {
+  const name = FONT_PRELIGHT_NAMES[fontFamilySel?.value ?? 'fira-code'];
+  if (!name || !document.fonts?.check) return true;
+  return document.fonts.check(`14px "${name}"`);
+}
+
+function getPreflightWarnings(format, width, height) {
+  const warnings = [];
+  const codeLines = (codeInput?.value ?? '').split('\n');
+  const lines = codeLines.length;
+  const longestLine = Math.max(0, ...codeLines.map(line => line.length));
+  const hasTransparency = exportStage?.classList.contains('bg-none');
+  const hasHorizontalClipping = Boolean(highlightPre && windowFrame && highlightPre.scrollWidth > windowFrame.clientWidth);
+
+  if (backgroundImageUrl) warnings.push('La imagen de fondo es temporal: se exporta en esta sesión, pero no se guarda en proyectos ni enlaces compartibles.');
+  if (!isSelectedFontAvailable()) warnings.push(`La fuente "${FONT_PRELIGHT_NAMES[fontFamilySel?.value] ?? 'seleccionada'}" no está disponible; la exportación usará una fuente de respaldo.`);
+  if (hasHorizontalClipping) warnings.push('El código supera el ancho visible del frame; aumenta el ancho o reduce la fuente antes de exportar.');
+  if (format === 'jpeg' && hasTransparency) warnings.push('JPG no admite transparencia: se exportará sobre fondo blanco.');
+  if (format === 'webp' && !supportsWebp()) warnings.push('Este navegador no admite WEBP; la descarga usará PNG.');
+  if (lines > 30) warnings.push(`El snippet tiene ${lines} líneas; revisa la legibilidad antes de publicar.`);
+  if (longestLine > 110) warnings.push(`Hay una línea de ${longestLine} caracteres; verifica el corte horizontal en pantallas móviles.`);
+  if (Math.min(width, height) < 900) warnings.push('La resolución final es baja para publicación social; considera 2× o 3×.');
+  if (width > 6000 || height > 6000) warnings.push('La resolución es muy alta y puede tardar más en renderizarse.');
+  return warnings;
+}
+
+function renderPreflightWarnings(warnings) {
+  if (!preflightWarnings) return;
+  preflightWarnings.innerHTML = warnings.map(warning => `<li>${warning}</li>`).join('');
+}
+
+function setPreflightStatus(text, state = 'ready') {
+  if (!preflightStatus) return;
+  preflightStatus.dataset.state = state;
+  preflightStatus.innerHTML = `<i aria-hidden="true"></i> ${text}`;
+}
+
+function scheduleRealPreflight() {
+  clearTimeout(realPreflightTimer);
+  const token = ++realPreflightToken;
+  if (typeof window.html2canvas !== 'function') return;
+  setPreflightStatus('Estimando…', 'pending');
+  realPreflightTimer = setTimeout(async () => {
+    try {
+      const canvas = await generateCanvas();
+      if (!canvas || token !== realPreflightToken) return;
+      const format = getExportFormat();
+      const { mimeType, usesQuality } = getExportMetadata(format);
+      canvas.toBlob(blob => {
+        if (!blob || token !== realPreflightToken) return;
+        if (preflightSize) preflightSize.textContent = formatFileSize(blob.size);
+        setPreflightStatus('Peso real', 'ready');
+      }, mimeType, usesQuality ? getExportQuality() : undefined);
+    } catch {
+      if (token === realPreflightToken) setPreflightStatus('Estimación', 'ready');
+    }
+  }, 650);
+}
+
+function updateExportPreflight() {
+  if (!exportStage) return;
+  const format = getExportFormat();
+  const scale = getExportScale();
+  const width = Math.round(exportStage.offsetWidth * scale);
+  const height = Math.round(exportStage.offsetHeight * scale);
+  const pixelBytes = width * height * 4;
+  const compression = getExportCompression(format);
+  const labels = { png: 'PNG', jpeg: 'JPG', webp: 'WEBP' };
+  const hints = {
+    png: 'PNG conserva transparencia y máxima fidelidad.',
+    jpeg: 'JPG reduce el peso; se exporta sobre fondo blanco.',
+    webp: 'WEBP ofrece gran calidad con un peso optimizado para web.'
+  };
+
+  if (preflightFormat) preflightFormat.textContent = labels[format];
+  if (preflightScale) preflightScale.textContent = `${scale}×`;
+  if (preflightDimensions) preflightDimensions.textContent = `${width} × ${height}`;
+  if (preflightSize) preflightSize.textContent = `≈ ${formatFileSize(pixelBytes * compression)}`;
+  if (preflightHint) preflightHint.textContent = hints[format];
+  renderPreflightWarnings(getPreflightWarnings(format, width, height));
+  scheduleRealPreflight();
+}
+
+if (exportFormatSel) {
+  exportFormatSel.addEventListener('change', () => {
+    const format = getExportFormat();
+    const usesQuality = format === 'jpeg' || format === 'webp';
+    if (jpegQualityWrapper) jpegQualityWrapper.style.display = usesQuality ? '' : 'none';
+    if (downloadBtn) downloadBtn.innerHTML = `<span aria-hidden="true">⬇</span> Descargar ${format === 'jpeg' ? 'JPG' : format.toUpperCase()}`;
+    updateExportPreflight();
+  });
+}
+
+if (exportQualityInput) {
+  exportQualityInput.addEventListener('input', () => {
+    if (exportQualityVal) exportQualityVal.textContent = exportQualityInput.value;
+    updateExportPreflight();
+  });
+}
+
+document.querySelectorAll('input[name="exportScale"]').forEach(input => {
+  input.addEventListener('change', updateExportPreflight);
+});
+
 // ============ Presets de estilo ============
 function loadPresets() {
   try { return JSON.parse(readPreference(PRESETS_KEY) ?? '[]'); } catch { return []; }
@@ -706,6 +1231,165 @@ function loadPresets() {
 
 function savePresetsToStorage(presets) {
   try { writePreference(PRESETS_KEY, JSON.stringify(presets)); } catch { /* noop */ }
+}
+
+const CURATED_PRESETS = [
+  { name: 'Dark Developer', state: { codeTheme: 'tomorrow', fontFamily: 'jetbrains', frameStyle: 'mac', frameWidth: '760', showTitlebar: '1', padding: '64', radius: '12', shadow: '60', activeBg: 'linear-gradient(135deg, #000000, #434343)', customBgActive: '0' } },
+  { name: 'Nord Minimal', state: { codeTheme: 'twilight', fontFamily: 'jetbrains', frameStyle: 'none', frameWidth: '720', showTitlebar: '0', padding: '52', radius: '10', shadow: '28', activeBg: 'linear-gradient(135deg, #2b5876, #4e4376)', customBgActive: '0' } },
+  { name: 'LinkedIn Professional', state: { codeTheme: 'tomorrow', fontFamily: 'fira-code', frameStyle: 'mac', frameWidth: '920', showTitlebar: '1', padding: '72', radius: '16', shadow: '65', activeBg: 'linear-gradient(135deg, #312e81, #7c3aed 55%, #c4b5fd)', customBgActive: '0' } },
+  { name: 'GitHub Dark', state: { codeTheme: 'dark', fontFamily: 'fira-code', frameStyle: 'browser', frameWidth: '860', showTitlebar: '1', padding: '56', radius: '10', shadow: '48', activeBg: 'linear-gradient(135deg, #111827, #374151)', customBgActive: '0' } },
+  { name: 'Sunset Gradient', state: { codeTheme: 'okaidia', fontFamily: 'cascadia', frameStyle: 'mac', frameWidth: '800', showTitlebar: '1', padding: '76', radius: '20', shadow: '70', activeBg: 'linear-gradient(135deg, #f97316, #fb7185)', customBgActive: '0' } }
+];
+
+function ensureCuratedPresets() {
+  if (readPreference(PRESETS_KEY) === null) savePresetsToStorage(CURATED_PRESETS);
+}
+
+function loadBrandKits() {
+  try { return JSON.parse(readPreference(BRAND_KITS_KEY) ?? '[]'); } catch { return []; }
+}
+
+function saveBrandKitsToStorage(kits) {
+  try { writePreference(BRAND_KITS_KEY, JSON.stringify(kits)); } catch { /* noop */ }
+}
+
+const PROJECT_DB_NAME = 'codeshot-library';
+const PROJECT_DB_VERSION = 1;
+const PROJECT_STORE_NAME = 'projects';
+let projectDatabasePromise = null;
+
+function loadProjects() {
+  try { return JSON.parse(readPreference(PROJECTS_KEY) ?? '[]'); } catch { return []; }
+}
+
+function openProjectDatabase() {
+  if (!('indexedDB' in window)) return Promise.resolve(null);
+  if (projectDatabasePromise) return projectDatabasePromise;
+  projectDatabasePromise = new Promise(resolve => {
+    const request = window.indexedDB.open(PROJECT_DB_NAME, PROJECT_DB_VERSION);
+    request.onupgradeneeded = () => {
+      const database = request.result;
+      if (!database.objectStoreNames.contains(PROJECT_STORE_NAME)) {
+        database.createObjectStore(PROJECT_STORE_NAME, { keyPath: 'id' });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => resolve(null);
+  });
+  return projectDatabasePromise;
+}
+
+async function persistProjectsToDatabase(projects) {
+  const database = await openProjectDatabase();
+  if (!database) return;
+  try {
+    await new Promise((resolve, reject) => {
+      const transaction = database.transaction(PROJECT_STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(PROJECT_STORE_NAME);
+      store.clear();
+      projects.forEach(project => store.put(project));
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+    });
+  } catch { /* localStorage remains the resilient fallback */ }
+}
+
+async function hydrateProjectsFromDatabase() {
+  const database = await openProjectDatabase();
+  if (!database) return;
+  try {
+    const projects = await new Promise((resolve, reject) => {
+      const request = database.transaction(PROJECT_STORE_NAME, 'readonly').objectStore(PROJECT_STORE_NAME).getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    const cachedProjects = loadProjects();
+    if (projects.length > 0) {
+      const newest = [...projects, ...cachedProjects]
+        .reduce((byId, project) => {
+          const previous = byId.get(String(project.id));
+          if (!previous || (project.updatedAt ?? 0) > (previous.updatedAt ?? 0)) byId.set(String(project.id), project);
+          return byId;
+        }, new Map());
+      const merged = [...newest.values()].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0)).slice(0, 48);
+      writePreference(PROJECTS_KEY, JSON.stringify(merged));
+      void persistProjectsToDatabase(merged);
+    } else if (cachedProjects.length > 0) {
+      await persistProjectsToDatabase(cachedProjects);
+    }
+    renderProjects();
+  } catch { /* continue with the localStorage cache */ }
+}
+
+function saveProjectsToStorage(projects) {
+  try {
+    writePreference(PROJECTS_KEY, JSON.stringify(projects));
+    void persistProjectsToDatabase(projects);
+  } catch { /* noop */ }
+}
+
+function isValidImportedProject(project) {
+  return project
+    && typeof project === 'object'
+    && typeof project.name === 'string'
+    && typeof project.code === 'string'
+    && typeof project.windowTitle === 'string'
+    && project.visual
+    && typeof project.visual === 'object';
+}
+
+function downloadProjectsBackup() {
+  const backup = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    projects: loadProjects()
+  };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }));
+  const link = document.createElement('a');
+  link.download = `codeshot-projects-${new Date().toISOString().slice(0, 10)}.json`;
+  link.href = url;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  if (downloadStatus) downloadStatus.textContent = 'Respaldo de proyectos descargado.';
+}
+
+async function importProjectsBackup(file) {
+  try {
+    const parsed = JSON.parse(await file.text());
+    const incoming = Array.isArray(parsed) ? parsed : parsed?.projects;
+    if (!Array.isArray(incoming)) throw new Error('Formato inválido');
+    const existing = loadProjects();
+    const existingIds = new Set(existing.map(project => String(project.id)));
+    const accepted = incoming
+      .filter(isValidImportedProject)
+      .filter(project => !existingIds.has(String(project.id)))
+      .map((project, index) => ({
+        ...project,
+        id: project.id ?? Date.now() + index,
+        updatedAt: Number.isFinite(project.updatedAt) ? project.updatedAt : Date.now(),
+        archived: Boolean(project.archived)
+      }));
+    if (accepted.length === 0) {
+      if (downloadStatus) downloadStatus.textContent = 'No hay proyectos nuevos válidos para importar.';
+      return;
+    }
+    saveProjectsToStorage([...accepted, ...existing].slice(0, 48));
+    renderProjects();
+    if (downloadStatus) downloadStatus.textContent = `${accepted.length} proyecto${accepted.length === 1 ? '' : 's'} importado${accepted.length === 1 ? '' : 's'}.`;
+  } catch (error) {
+    console.error(error);
+    if (downloadStatus) downloadStatus.textContent = 'No se pudo importar el respaldo. Verifica el archivo JSON.';
+  }
+}
+
+function buildCurrentProjectState() {
+  return {
+    code: codeInput?.value ?? '',
+    windowTitle: windowTitleInput?.value ?? 'untitled.js',
+    visual: buildCurrentPresetState()
+  };
 }
 
 function buildCurrentPresetState() {
@@ -720,6 +1404,8 @@ function buildCurrentPresetState() {
     padding:     paddingInput?.value,
     radius:      radiusInput?.value,
     shadow:      shadowInput?.value,
+    showWatermark: showWatermarkChk?.checked ? '1' : '0',
+    watermarkText: watermarkTextInput?.value,
     activeBg:    bgSwatchesContainer?.querySelector('.swatch.active')?.style.background ?? '',
     customBgActive: customBgToggle?.checked ? '1' : '0',
     customBgColor:  customBgColor?.value
@@ -747,7 +1433,7 @@ function applyPresetFrameState(state) {
   if (state.frameWidth && frameWidthInput) {
     frameWidthInput.value = state.frameWidth;
     if (frameWidthVal) frameWidthVal.textContent = state.frameWidth;
-    if (windowFrame) windowFrame.style.minWidth = state.frameWidth + 'px';
+    if (windowFrame) windowFrame.style.setProperty('--frame-width', state.frameWidth + 'px');
   }
   if (state.showTitlebar !== undefined && showTitlebarChk) showTitlebarChk.checked = state.showTitlebar === '1';
 }
@@ -797,6 +1483,14 @@ function applyPresetVisualState(state) {
   applyPresetRadius(state);
   applyPresetShadow(state);
   applyPresetBgState(state);
+  if (state.showWatermark !== undefined && showWatermarkChk) {
+    showWatermarkChk.checked = state.showWatermark === '1';
+    watermark?.classList.toggle('visible', showWatermarkChk.checked);
+  }
+  if (state.watermarkText !== undefined && watermarkTextInput) {
+    watermarkTextInput.value = state.watermarkText;
+    if (watermark) watermark.textContent = state.watermarkText || 'Hecho con CodeShot';
+  }
 }
 
 function applyPresetState(state) {
@@ -817,16 +1511,361 @@ function renderPresets() {
   const presets = loadPresets();
   if (presets.length === 0) { presetList.innerHTML = '<p style="font-size:12px;color:var(--text-dim);margin:0">No hay presets guardados.</p>'; return; }
   presets.forEach((p, idx) => {
-    const item = document.createElement('div');
-    item.className = 'preset-item';
-    item.innerHTML = `<button class="preset-load" title="Aplicar preset">${p.name}</button><button title="Eliminar" aria-label="Eliminar preset ${p.name}">🗑</button>`;
-    item.querySelector('.preset-load').addEventListener('click', () => applyPresetState(p.state));
-    item.querySelectorAll('button')[1].addEventListener('click', () => {
+    const item = document.createElement('article');
+    const preview = p.state.customBgActive === '1' ? p.state.customBgColor : p.state.activeBg;
+    item.className = 'preset-item preset-card';
+    item.innerHTML = `<button class="preset-load" title="Aplicar preset ${p.name}"><span class="preset-thumbnail" style="background:${preview || 'linear-gradient(135deg,#312e81,#7c3aed)'}"><i></i></span><span><strong>${p.name}</strong><small>${p.state.frameWidth || 680}px · ${p.state.codeTheme || 'tomorrow'}</small></span></button><button class="preset-delete" title="Eliminar" aria-label="Eliminar preset ${p.name}">×</button>`;
+    item.querySelector('.preset-load').addEventListener('click', () => {
+      applyPresetState(p.state);
+      updateWorkspaceContext();
+      requestAnimationFrame(fitStageToViewport);
+    });
+    item.querySelector('.preset-delete').addEventListener('click', () => {
       const updated = loadPresets().filter((_, i) => i !== idx);
       savePresetsToStorage(updated);
       renderPresets();
     });
     presetList.appendChild(item);
+  });
+}
+
+function renderBrandKits() {
+  if (!brandKitList) return;
+  const kits = loadBrandKits();
+  brandKitList.innerHTML = '';
+  if (kits.length === 0) {
+    brandKitList.innerHTML = '<p class="brand-kit-empty">Aún no has guardado una identidad visual.</p>';
+    return;
+  }
+  kits.forEach((kit, index) => {
+    const item = document.createElement('article');
+    const preview = kit.state.customBgActive === '1' ? kit.state.customBgColor : kit.state.activeBg;
+    item.className = 'brand-kit-card';
+    item.innerHTML = `<button class="brand-kit-apply" type="button" title="Aplicar ${kit.name}"><span class="brand-kit-mark" style="background:${preview || 'linear-gradient(135deg,#312e81,#7c3aed)'}"></span><span><strong>${kit.name}</strong><small>${kit.state.fontFamily || 'fira-code'} · ${kit.state.frameStyle || 'mac'}</small></span></button><button class="brand-kit-delete" type="button" aria-label="Eliminar Brand Kit ${kit.name}">×</button>`;
+    item.querySelector('.brand-kit-apply').addEventListener('click', () => {
+      applyPresetState(kit.state);
+      updateWorkspaceContext();
+      requestAnimationFrame(() => {
+        updateExportPreflight();
+        fitStageToViewport();
+      });
+    });
+    item.querySelector('.brand-kit-delete').addEventListener('click', () => {
+      saveBrandKitsToStorage(loadBrandKits().filter((_, currentIndex) => currentIndex !== index));
+      renderBrandKits();
+    });
+    brandKitList.appendChild(item);
+  });
+}
+
+function getActiveProjectId() {
+  return readPreference(ACTIVE_PROJECT_KEY);
+}
+
+function setActiveProjectId(id) {
+  if (id === null || id === undefined) {
+    try { window.localStorage.removeItem(ACTIVE_PROJECT_KEY); } catch { /* noop */ }
+    return;
+  }
+  writePreference(ACTIVE_PROJECT_KEY, String(id));
+}
+
+function formatProjectDate(timestamp) {
+  if (!timestamp) return 'Sin guardar';
+  return new Intl.DateTimeFormat('es', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(timestamp));
+}
+
+function setSaveIndicator(state, label) {
+  if (!saveIndicator) return;
+  saveIndicator.dataset.state = state;
+  const text = saveIndicator.querySelector('span');
+  if (text) text.textContent = label;
+}
+
+function updateProjectStatus() {
+  const active = loadProjects().find(project => String(project.id) === getActiveProjectId());
+  if (projectStatus) {
+    projectStatus.textContent = active
+      ? `Autosave local activo · ${active.name} · ${formatProjectDate(active.updatedAt)}`
+      : 'Crea un proyecto para activar el guardado automático local.';
+  }
+  setSaveIndicator(active ? 'saved' : 'idle', active ? 'Guardado' : 'Sin proyecto');
+}
+
+function buildProjectSnapshot(project) {
+  return {
+    code: project.code ?? '',
+    windowTitle: project.windowTitle ?? 'untitled.js',
+    visual: project.visual ?? {},
+    thumbnailUrl: project.thumbnailUrl ?? '',
+    savedAt: Date.now()
+  };
+}
+
+async function createProjectThumbnail() {
+  if (typeof window.html2canvas !== 'function' || !exportStage) return '';
+  try {
+    const canvas = await generateCanvasAtScale(1);
+    if (!canvas) return '';
+    const maxWidth = 320;
+    const maxHeight = 180;
+    const ratio = Math.min(maxWidth / canvas.width, maxHeight / canvas.height, 1);
+    const thumbnail = document.createElement('canvas');
+    thumbnail.width = Math.max(1, Math.round(canvas.width * ratio));
+    thumbnail.height = Math.max(1, Math.round(canvas.height * ratio));
+    thumbnail.getContext('2d')?.drawImage(canvas, 0, 0, thumbnail.width, thumbnail.height);
+    return thumbnail.toDataURL('image/jpeg', 0.68);
+  } catch {
+    return '';
+  }
+}
+
+async function autosaveActiveProject(createVersion = false) {
+  projectAutosaveTimer = null;
+  const activeId = getActiveProjectId();
+  if (!activeId) return;
+  const projects = loadProjects();
+  const index = projects.findIndex(project => String(project.id) === activeId);
+  if (index === -1 || projects[index].archived) {
+    setActiveProjectId(null);
+    updateProjectStatus();
+    return;
+  }
+  const current = projects[index];
+  const versions = createVersion
+    ? [buildProjectSnapshot(current), ...(current.versions ?? [])].slice(0, 8)
+    : current.versions ?? [];
+  const thumbnailUrl = await createProjectThumbnail();
+  projects[index] = {
+    ...current,
+    ...buildCurrentProjectState(),
+    ...(thumbnailUrl ? { thumbnailUrl } : {}),
+    versions,
+    updatedAt: Date.now()
+  };
+  saveProjectsToStorage(projects);
+  setSaveIndicator('saved', 'Guardado');
+  updateProjectStatus();
+  renderProjects();
+}
+
+function scheduleProjectAutosave() {
+  if (!getActiveProjectId()) return;
+  clearTimeout(projectAutosaveTimer);
+  setSaveIndicator('saving', 'Guardando…');
+  projectAutosaveTimer = setTimeout(autosaveActiveProject, 700);
+}
+
+function saveActiveProjectNow() {
+  if (!getActiveProjectId()) return false;
+  clearTimeout(projectAutosaveTimer);
+  setSaveIndicator('saving', 'Guardando…');
+  void autosaveActiveProject(true);
+  if (downloadStatus) downloadStatus.textContent = 'Proyecto guardado como nueva versión.';
+  return true;
+}
+
+function applyProject(project) {
+  if (!project) return;
+  setActiveProjectId(project.id);
+  renderProjects();
+  if (codeInput) codeInput.value = project.code ?? '';
+  if (windowTitleInput) {
+    windowTitleInput.value = project.windowTitle || 'untitled.js';
+    windowTitleInput.dataset.touched = 'true';
+  }
+  applyPresetState(project.visual);
+  updateWindowTitleText();
+  highlightCodeNow();
+  updateLineNumbers();
+  updateWorkspaceContext();
+  requestAnimationFrame(() => {
+    updateExportPreflight();
+    fitStageToViewport();
+  });
+}
+
+function restoreActiveProject() {
+  const activeId = getActiveProjectId();
+  const project = loadProjects().find(item => String(item.id) === activeId && !item.archived);
+  if (!project) {
+    if (activeId) setActiveProjectId(null);
+    return false;
+  }
+  applyProject(project);
+  return true;
+}
+
+function renderCollectionFilter() {
+  if (!projectCollectionFilter) return;
+  const selected = projectCollectionFilter.value;
+  const collections = [...new Set(loadProjects().map(project => project.collection?.trim()).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b, 'es'));
+  projectCollectionFilter.innerHTML = '<option value="">Todas las colecciones</option>';
+  collections.forEach(collection => {
+    const option = document.createElement('option');
+    option.value = collection;
+    option.textContent = collection;
+    projectCollectionFilter.appendChild(option);
+  });
+  projectCollectionFilter.value = collections.includes(selected) ? selected : '';
+}
+
+function renderProjects() {
+  if (!projectList) return;
+  renderCollectionFilter();
+  const activeId = getActiveProjectId();
+  const query = projectSearchInput?.value.trim().toLocaleLowerCase('es') ?? '';
+  const collection = projectCollectionFilter?.value ?? '';
+  const projects = loadProjects()
+    .filter(project => Boolean(project.archived) === (projectLibraryView === 'archived'))
+    .filter(project => !collection || project.collection === collection)
+    .filter(project => {
+      if (!query) return true;
+      const searchable = `${project.name ?? ''} ${project.windowTitle ?? ''} ${project.code ?? ''}`.toLocaleLowerCase('es');
+      return searchable.includes(query);
+    })
+    .sort((a, b) => {
+      const sort = projectSortSelect?.value ?? 'recent';
+      if (sort === 'name') return (a.name ?? '').localeCompare(b.name ?? '', 'es');
+      if (sort === 'file') return (a.windowTitle ?? '').localeCompare(b.windowTitle ?? '', 'es');
+      return (b.updatedAt ?? 0) - (a.updatedAt ?? 0);
+    });
+  projectList.innerHTML = '';
+  if (projects.length === 0) {
+    let emptyMessage;
+    if (query) {
+      emptyMessage = 'No hay proyectos que coincidan con la búsqueda.';
+    } else if (projectLibraryView === 'archived') {
+      emptyMessage = 'No hay proyectos archivados.';
+    } else {
+      emptyMessage = 'Aún no hay proyectos activos.';
+    }
+    projectList.innerHTML = `<p class="project-empty">${emptyMessage}</p>`;
+    updateProjectStatus();
+    return;
+  }
+  projects.forEach(project => {
+    const item = document.createElement('article');
+    const preview = project.visual?.customBgActive === '1' ? project.visual.customBgColor : project.visual?.activeBg;
+    const lines = (project.code ?? '').split('\n').length;
+    const isActive = String(project.id) === activeId;
+    item.className = `project-card${isActive ? ' is-active' : ''}`;
+    const canRestoreVersion = (project.versions?.length ?? 0) > 0;
+    const collectionMeta = project.collection ? ` · ${project.collection}` : '';
+    const thumbnail = project.thumbnailUrl
+      ? `<img src="${project.thumbnailUrl}" alt="" />`
+      : '<i aria-hidden="true"></i>';
+    const restoreVersionBtn = canRestoreVersion
+      ? `<button class="project-version" type="button" aria-label="Restaurar última versión de ${project.name}" title="Restaurar última versión">↶</button>`
+      : '';
+    const archiveLabel = project.archived ? 'Restaurar' : 'Archivar';
+    const archiveIcon = project.archived ? '↶' : '⌑';
+    const activeLabel = isActive ? ' <em>Activo</em>' : '';
+    item.innerHTML = `<button class="project-open" type="button" title="Abrir ${project.name}"><span class="project-thumbnail" style="background:${preview || 'linear-gradient(135deg,#312e81,#7c3aed)'}">${thumbnail}</span><span><strong>${project.name}${activeLabel}</strong><small>${lines} líneas · ${project.windowTitle || 'untitled.js'}${collectionMeta} · ${formatProjectDate(project.updatedAt)}</small></span></button><div class="project-actions">${restoreVersionBtn}<button class="project-rename" type="button" aria-label="Renombrar ${project.name}" title="Renombrar">✎</button><button class="project-duplicate" type="button" aria-label="Duplicar ${project.name}" title="Duplicar">⧉</button><button class="project-archive" type="button" aria-label="${archiveLabel} ${project.name}" title="${archiveLabel}">${archiveIcon}</button><button class="project-delete" type="button" aria-label="Eliminar proyecto ${project.name}" title="Eliminar">×</button></div>`;
+    item.querySelector('.project-open').addEventListener('click', () => applyProject(project));
+    item.querySelector('.project-version')?.addEventListener('click', () => {
+      const version = project.versions?.[0];
+      if (!version || !confirm(`¿Restaurar la versión guardada el ${formatProjectDate(version.savedAt)}?`)) return;
+      const restored = { ...project, ...version, versions: project.versions.slice(1), updatedAt: Date.now() };
+      saveProjectsToStorage(loadProjects().map(current => current.id === project.id ? restored : current));
+      applyProject(restored);
+      if (downloadStatus) downloadStatus.textContent = 'Última versión restaurada.';
+    });
+    item.querySelector('.project-rename').addEventListener('click', () => {
+      const name = prompt('Nuevo nombre del proyecto:', project.name)?.trim();
+      if (!name) return;
+      saveProjectsToStorage(loadProjects().map(current => current.id === project.id ? { ...current, name, updatedAt: Date.now() } : current));
+      renderProjects();
+    });
+    item.querySelector('.project-duplicate').addEventListener('click', () => {
+      const copy = { ...project, id: Date.now(), name: `${project.name} (copia)`, updatedAt: Date.now(), archived: false };
+      saveProjectsToStorage([copy, ...loadProjects()].slice(0, 48));
+      setActiveProjectId(copy.id);
+      renderProjects();
+    });
+    item.querySelector('.project-archive').addEventListener('click', () => {
+      const archived = !project.archived;
+      saveProjectsToStorage(loadProjects().map(current => current.id === project.id ? { ...current, archived, updatedAt: Date.now() } : current));
+      if (String(project.id) === activeId && archived) setActiveProjectId(null);
+      renderProjects();
+    });
+    item.querySelector('.project-delete').addEventListener('click', () => {
+      if (!confirm(`¿Eliminar el proyecto "${project.name}"?`)) return;
+      saveProjectsToStorage(loadProjects().filter(current => current.id !== project.id));
+      if (String(project.id) === activeId) setActiveProjectId(null);
+      renderProjects();
+    });
+    projectList.appendChild(item);
+  });
+  updateProjectStatus();
+}
+
+if (saveProjectBtn) {
+  saveProjectBtn.addEventListener('click', async () => {
+    const name = projectNameInput?.value.trim();
+    if (!name) { projectNameInput?.focus(); return; }
+    saveProjectBtn.disabled = true;
+    setSaveIndicator('saving', 'Guardando…');
+    const collection = projectCollectionInput?.value.trim().slice(0, 60) ?? '';
+    const thumbnailUrl = await createProjectThumbnail();
+    const project = {
+      id: Date.now(),
+      name,
+      collection,
+      updatedAt: Date.now(),
+      archived: false,
+      ...buildCurrentProjectState(),
+      ...(thumbnailUrl ? { thumbnailUrl } : {})
+    };
+    saveProjectsToStorage([project, ...loadProjects()].slice(0, 48));
+    setActiveProjectId(project.id);
+    setSaveIndicator('saved', 'Guardado');
+    if (projectNameInput) projectNameInput.value = '';
+    if (projectCollectionInput) projectCollectionInput.value = '';
+    saveProjectBtn.disabled = false;
+    renderProjects();
+  });
+}
+
+function setProjectLibraryView(view) {
+  projectLibraryView = view;
+  const active = view === 'active';
+  showActiveProjectsBtn?.classList.toggle('is-active', active);
+  showArchivedProjectsBtn?.classList.toggle('is-active', !active);
+  showActiveProjectsBtn?.setAttribute('aria-pressed', String(active));
+  showArchivedProjectsBtn?.setAttribute('aria-pressed', String(!active));
+  renderProjects();
+}
+
+showActiveProjectsBtn?.addEventListener('click', () => setProjectLibraryView('active'));
+showArchivedProjectsBtn?.addEventListener('click', () => setProjectLibraryView('archived'));
+projectSearchInput?.addEventListener('input', renderProjects);
+projectCollectionFilter?.addEventListener('change', renderProjects);
+projectSortSelect?.addEventListener('change', renderProjects);
+exportProjectsBtn?.addEventListener('click', downloadProjectsBackup);
+importProjectsBtn?.addEventListener('click', () => importProjectsInput?.click());
+importProjectsInput?.addEventListener('change', event => {
+  const file = event.target.files?.[0];
+  if (file) void importProjectsBackup(file);
+  event.target.value = '';
+});
+document.addEventListener('input', event => {
+  if (!event.target.closest('#projectNameInput, #brandKitNameInput, #presetNameInput')) scheduleProjectAutosave();
+});
+document.addEventListener('change', event => {
+  if (!event.target.closest('#projectNameInput, #brandKitNameInput, #presetNameInput')) scheduleProjectAutosave();
+});
+
+if (saveBrandKitBtn) {
+  saveBrandKitBtn.addEventListener('click', () => {
+    const name = brandKitNameInput?.value.trim();
+    if (!name) { brandKitNameInput?.focus(); return; }
+    const kits = loadBrandKits();
+    kits.push({ name, state: buildCurrentPresetState() });
+    saveBrandKitsToStorage(kits);
+    if (brandKitNameInput) brandKitNameInput.value = '';
+    renderBrandKits();
   });
 }
 
@@ -1020,28 +2059,83 @@ async function generateCanvas() {
   } finally { exportStage.style.transform = orig; }
 }
 
+function getExportMetadata(format) {
+  const metadataByFormat = {
+    png: { mimeType: 'image/png', extension: '.png', usesQuality: false },
+    jpeg: { mimeType: 'image/jpeg', extension: '.jpg', usesQuality: true },
+    webp: { mimeType: 'image/webp', extension: '.webp', usesQuality: true }
+  };
+  if (format === 'webp' && !supportsWebp()) return metadataByFormat.png;
+  return metadataByFormat[format] ?? metadataByFormat.png;
+}
+
+function triggerImageDownload(canvas) {
+  const format = getExportFormat();
+  const { mimeType, extension, usesQuality } = getExportMetadata(format);
+  const filename = safeFilename(windowTitleInput?.value).replace(/\.png$/, extension);
+  const quality = usesQuality ? getExportQuality() : undefined;
+  const dataUrl = canvas.toDataURL(mimeType, quality);
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = dataUrl;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  addToHistory(filename, dataUrl);
+  return filename;
+}
+
+function setExportFeedback(message, state = 'progress', retryAction = null) {
+  retryExportAction = retryAction;
+  if (downloadStatus) downloadStatus.textContent = message;
+  if (!exportFeedback || !exportFeedbackText || !retryExportBtn) return;
+  exportFeedback.hidden = false;
+  exportFeedback.dataset.state = state;
+  exportFeedbackText.textContent = message;
+  retryExportBtn.hidden = !retryAction;
+}
+
+function clearExportFeedback() {
+  retryExportAction = null;
+  if (exportFeedback) exportFeedback.hidden = true;
+  if (retryExportBtn) retryExportBtn.hidden = true;
+}
+
+function getExportErrorMessage(error) {
+  if (typeof window.html2canvas !== 'function') return 'No se pudo iniciar la exportación: la librería de renderizado no está disponible. Recarga la página e inténtalo de nuevo.';
+  if (error?.name === 'SecurityError') return 'No se pudo exportar por una restricción de seguridad del navegador. Quita la imagen de fondo o utiliza una imagen local permitida.';
+  return 'No se pudo generar la imagen. Reduce la escala o el tamaño del snippet y vuelve a intentarlo.';
+}
+
+async function downloadCurrentImage() {
+  if (typeof window.html2canvas !== 'function') {
+    setExportFeedback('No se pudo iniciar la exportación: la librería de renderizado no está disponible. Recarga la página e inténtalo de nuevo.', 'error', downloadCurrentImage);
+    return;
+  }
+  downloadBtn.disabled = true;
+  setExportFeedback('Generando imagen…', 'progress');
+  try {
+    const canvas = await generateCanvas();
+    if (!canvas) throw new Error('Canvas nulo');
+    setExportFeedback('Preparando descarga…', 'progress');
+    const filename = triggerImageDownload(canvas);
+    setExportFeedback(`Imagen "${filename}" descargada.`, 'success');
+  } catch (error) {
+    console.error(error);
+    setExportFeedback(getExportErrorMessage(error), 'error', downloadCurrentImage);
+  } finally {
+    downloadBtn.disabled = false;
+  }
+}
+
+retryExportBtn?.addEventListener('click', () => {
+  const action = retryExportAction;
+  clearExportFeedback();
+  if (action) void action();
+});
+
 if (downloadBtn) {
-  downloadBtn.addEventListener('click', async () => {
-    if (typeof window.html2canvas !== 'function') {
-      if (downloadStatus) downloadStatus.textContent = 'Librería de exportación no disponible.';
-      return;
-    }
-    downloadBtn.disabled = true;
-    if (downloadStatus) downloadStatus.textContent = 'Generando imagen…';
-    try {
-      const canvas = await generateCanvas(); if (!canvas) throw new Error('Canvas nulo');
-      const fmt = getExportFormat();
-      const mimeType = fmt === 'jpeg' ? 'image/jpeg' : 'image/png';
-      const ext = fmt === 'jpeg' ? '.jpg' : '.png';
-      const filename = safeFilename(windowTitleInput?.value).replace(/\.png$/, ext);
-      const dataUrl = canvas.toDataURL(mimeType, fmt === 'jpeg' ? getExportQuality() : undefined);
-      const link = document.createElement('a'); link.download = filename; link.href = dataUrl;
-      document.body.appendChild(link); link.click(); link.remove();
-      if (downloadStatus) downloadStatus.textContent = `Imagen "${filename}" descargada.`;
-      addToHistory(filename, dataUrl);
-    } catch (err) { console.error(err); if (downloadStatus) downloadStatus.textContent = 'Error al generar la imagen.'; }
-    finally { downloadBtn.disabled = false; }
-  });
+  downloadBtn.addEventListener('click', downloadCurrentImage);
 }
 
 if (copyImgBtn) {
@@ -1064,6 +2158,13 @@ document.addEventListener('keydown', (e) => {
   const ctrl = e.ctrlKey || e.metaKey;
   if (!ctrl) return;
   if (e.key === 'Enter') { e.preventDefault(); downloadBtn?.click(); }
+  else if (e.key === 's' || e.key === 'S') {
+    e.preventDefault();
+    if (!saveActiveProjectNow()) {
+      revealControlGroup('group-proyectos', 'projectNameInput');
+      if (downloadStatus) downloadStatus.textContent = 'Asigna un nombre para crear el primer proyecto.';
+    }
+  }
   else if (e.shiftKey && e.key === 'C') { e.preventDefault(); copyImgBtn?.click(); }
   else if (e.key === 'l' || e.key === 'L') { e.preventDefault(); clearCodeBtn?.click(); }
   else if (e.key === '=' || e.key === '+') { e.preventDefault(); zoomInBtn?.click(); }
@@ -1088,7 +2189,8 @@ function buildZip(files) {
   ev.setUint32(0,0x06054b50,true); ev.setUint16(4,0,true); ev.setUint16(6,0,true); ev.setUint16(8,files.length,true); ev.setUint16(10,files.length,true); ev.setUint32(12,cds,true); ev.setUint32(16,off,true); ev.setUint16(20,0,true);
   const all = [...lp,...cp,eocd], total = all.reduce((s,p) => s+p.length,0), res = new Uint8Array(total); let pos = 0; for (const p of all) { res.set(p,pos); pos += p.length; } return res;
 }
-function canvasToUint8Array(canvas) { const b64 = canvas.toDataURL('image/png').split(',')[1], bin = atob(b64); return Uint8Array.from(bin, ch => ch.codePointAt(0)); }
+function dataUrlToUint8Array(dataUrl) { const bin = atob(dataUrl.split(',')[1]); return Uint8Array.from(bin, ch => ch.codePointAt(0)); }
+function canvasToUint8Array(canvas) { return dataUrlToUint8Array(canvas.toDataURL('image/png')); }
 async function generateCanvasAtScale(scale) {
   if (typeof window.html2canvas !== 'function') return null;
   const orig = exportStage.style.transform; exportStage.style.transform = 'none'; const isNone = exportStage.classList.contains('bg-none'); codeInput?.blur();
@@ -1096,6 +2198,214 @@ async function generateCanvasAtScale(scale) {
   finally { exportStage.style.transform = orig; }
 }
 const exportZipBtn = document.getElementById('exportZipBtn');
+const exportWebPackBtn = document.getElementById('exportWebPackBtn');
+const exportPackSelect = document.getElementById('exportPackSelect');
+const exportPackBtn = document.getElementById('exportPackBtn');
+const EXPORT_PACKS = {
+  linkedin: {
+    label: 'LinkedIn',
+    files: [{ format: 'png', scale: 1 }, { format: 'png', scale: 2 }, { format: 'webp', scale: 2 }]
+  },
+  documentation: {
+    label: 'Documentation',
+    files: [{ format: 'png', scale: 1 }, { format: 'png', scale: 2 }, { format: 'webp', scale: 1 }]
+  },
+  social: {
+    label: 'Social',
+    files: [{ format: 'png', scale: 2 }, { format: 'jpeg', scale: 2 }, { format: 'webp', scale: 2 }]
+  }
+};
+
+if (exportWebPackBtn) {
+  exportWebPackBtn.addEventListener('click', async () => {
+    if (typeof window.html2canvas !== 'function') {
+      if (downloadStatus) downloadStatus.textContent = 'Librería no disponible.';
+      return;
+    }
+    exportWebPackBtn.disabled = true;
+    if (downloadStatus) downloadStatus.textContent = 'Generando Web Pack…';
+    try {
+      const canvas = await generateCanvas();
+      if (!canvas) throw new Error('Canvas nulo');
+      const base = safeFilename(windowTitleInput?.value).replace(/\.png$/, '');
+      const quality = getExportQuality();
+      const files = [
+        { name: `${base}.png`, data: dataUrlToUint8Array(canvas.toDataURL('image/png')) },
+        { name: `${base}.jpg`, data: dataUrlToUint8Array(canvas.toDataURL('image/jpeg', quality)) }
+      ];
+      if (supportsWebp()) {
+        files.push({ name: `${base}.webp`, data: dataUrlToUint8Array(canvas.toDataURL('image/webp', quality)) });
+      } else {
+        files.push({ name: `${base}-webp-fallback.png`, data: dataUrlToUint8Array(canvas.toDataURL('image/png')) });
+      }
+      const blob = new Blob([buildZip(files)], { type: 'application/zip' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `${base}-web-pack.zip`;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      if (downloadStatus) downloadStatus.textContent = supportsWebp() ? 'Web Pack descargado.' : 'Web Pack descargado con fallback PNG para WEBP.';
+    } catch (err) {
+      console.error(err);
+      if (downloadStatus) downloadStatus.textContent = 'Error al generar el Web Pack.';
+    } finally {
+      exportWebPackBtn.disabled = false;
+    }
+  });
+}
+
+const batchFilesInput = document.getElementById('batchFilesInput');
+const exportBatchBtn = document.getElementById('exportBatchBtn');
+const batchFilesStatus = document.getElementById('batchFilesStatus');
+let selectedBatchFiles = [];
+
+function detectLanguageFromFilename(filename) {
+  const extension = filename.split('.').pop()?.toLowerCase() ?? '';
+  const languagesByExtension = {
+    js: 'javascript', ts: 'typescript', jsx: 'jsx', tsx: 'jsx', py: 'python',
+    java: 'java', cs: 'csharp', cpp: 'cpp', c: 'c', go: 'go', rs: 'rust',
+    php: 'php', rb: 'ruby', html: 'markup', htm: 'markup', css: 'css',
+    json: 'json', sh: 'bash', sql: 'sql', yml: 'yaml', yaml: 'yaml', md: 'markdown'
+  };
+  return languagesByExtension[extension] ?? 'javascript';
+}
+
+function updateBatchFilesStatus() {
+  const count = selectedBatchFiles.length;
+  if (batchFilesStatus) {
+    const fileLabel = count === 1 ? 'archivo' : 'archivos';
+    const readyLabel = count === 1 ? 'listo' : 'listos';
+    batchFilesStatus.textContent = count
+      ? `${count} ${fileLabel} ${readyLabel} para exportar como PNG 2×.`
+      : 'Selecciona hasta 12 archivos de código.';
+  }
+  if (exportBatchBtn) exportBatchBtn.disabled = count === 0;
+}
+
+batchFilesInput?.addEventListener('change', event => {
+  selectedBatchFiles = [...(event.target.files ?? [])].slice(0, 12);
+  updateBatchFilesStatus();
+});
+
+async function renderBatchFile(file) {
+  const original = buildCurrentProjectState();
+  const originalTouched = windowTitleInput?.dataset.touched;
+  try {
+    if (codeInput) codeInput.value = await file.text();
+    if (windowTitleInput) {
+      windowTitleInput.value = file.name;
+      windowTitleInput.dataset.touched = 'true';
+    }
+    if (languageSel) languageSel.value = detectLanguageFromFilename(file.name);
+    highlightCodeNow();
+    lastLineCount = -1;
+    updateLineNumbers();
+    updateWindowTitleText();
+    updateWorkspaceContext();
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const canvas = await generateCanvasAtScale(2);
+    if (!canvas) throw new Error('Canvas nulo');
+    return {
+      name: safeFilename(file.name).replace(/\.png$/, '-batch-2x.png'),
+      data: canvasToUint8Array(canvas)
+    };
+  } finally {
+    if (codeInput) codeInput.value = original.code;
+    if (windowTitleInput) {
+      windowTitleInput.value = original.windowTitle;
+      if (originalTouched === undefined) delete windowTitleInput.dataset.touched;
+      else windowTitleInput.dataset.touched = originalTouched;
+    }
+    applyPresetState(original.visual);
+    updateWindowTitleText();
+    updateWorkspaceContext();
+  }
+}
+
+exportBatchBtn?.addEventListener('click', async () => {
+  if (selectedBatchFiles.length === 0) return;
+  if (typeof window.html2canvas !== 'function') {
+    setExportFeedback('No se pudo iniciar el lote: la librería de renderizado no está disponible. Recarga la página e inténtalo de nuevo.', 'error');
+    return;
+  }
+  exportBatchBtn.disabled = true;
+  const files = [];
+  try {
+    const renderedFiles = await Promise.all(
+      selectedBatchFiles.map((file, index) => {
+        setExportFeedback(`Procesando archivo ${index + 1}/${selectedBatchFiles.length}: ${file.name}`, 'progress');
+        return renderBatchFile(file);
+      })
+    );
+    files.push(...renderedFiles);
+    const archive = new Blob([buildZip(files)], { type: 'application/zip' });
+    const url = URL.createObjectURL(archive);
+    const link = document.createElement('a');
+    link.download = `codeshot-batch-${new Date().toISOString().slice(0, 10)}.zip`;
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setExportFeedback(`Lote descargado con ${files.length} captura${files.length === 1 ? '' : 's'} PNG.`, 'success');
+  } catch (error) {
+    console.error(error);
+    setExportFeedback('No se pudo completar el lote. Verifica los archivos seleccionados y reduce el tamaño de los snippets.', 'error');
+  } finally {
+    updateBatchFilesStatus();
+  }
+});
+
+async function generatePackFile(base, pack, definition, index) {
+  setExportFeedback(`Generando pack ${pack.label}: ${index + 1}/${pack.files.length}…`, 'progress');
+  const canvas = await generateCanvasAtScale(definition.scale);
+  if (!canvas) throw new Error('Canvas nulo');
+  const requestedFormat = definition.format === 'webp' && !supportsWebp() ? 'png' : definition.format;
+  const extension = requestedFormat === 'jpeg' ? 'jpg' : requestedFormat;
+  const mimeType = requestedFormat === 'jpeg' ? 'image/jpeg' : `image/${requestedFormat}`;
+  const suffix = definition.format === 'webp' && requestedFormat === 'png' ? '-webp-fallback' : '';
+  return {
+    name: `${base}-${pack.label.toLowerCase()}-${definition.scale}x${suffix}.${extension}`,
+    data: dataUrlToUint8Array(canvas.toDataURL(mimeType, requestedFormat === 'png' ? undefined : getExportQuality()))
+  };
+}
+
+if (exportPackBtn) {
+  exportPackBtn.addEventListener('click', async () => {
+    if (typeof window.html2canvas !== 'function') {
+      setExportFeedback('No se pudo iniciar el pack: la librería de renderizado no está disponible. Recarga la página e inténtalo de nuevo.', 'error');
+      return;
+    }
+    const pack = EXPORT_PACKS[exportPackSelect?.value] ?? EXPORT_PACKS.linkedin;
+    exportPackBtn.disabled = true;
+    setExportFeedback(`Generando pack ${pack.label}: 0/${pack.files.length}…`, 'progress');
+    try {
+      const base = safeFilename(windowTitleInput?.value).replace(/\.png$/, '');
+      const files = await Promise.all(
+        pack.files.map((definition, index) => generatePackFile(base, pack, definition, index))
+      );
+      const blob = new Blob([buildZip(files)], { type: 'application/zip' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `${base}-${pack.label.toLowerCase()}-pack.zip`;
+      link.href = url;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      setExportFeedback(`Pack ${pack.label} descargado con ${files.length} archivos.`, 'success');
+    } catch (error) {
+      console.error(error);
+      setExportFeedback('No se pudo generar el pack. Reduce la escala o el tamaño del snippet y vuelve a intentarlo.', 'error');
+    } finally {
+      exportPackBtn.disabled = false;
+    }
+  });
+}
+
 if (exportZipBtn) {
   exportZipBtn.addEventListener('click', async () => {
     if (typeof window.html2canvas !== 'function') {
@@ -1157,7 +2467,21 @@ if (clearHistoryBtn) clearHistoryBtn.addEventListener('click', () => { saveHisto
 
 // ============ Arranque ============
 init();
+setupInterfaceComponents();
 syncTitlebarVisibility();
+ensureCuratedPresets();
 renderPresets();
+renderBrandKits();
+renderProjects();
 renderHistory();
-if (!restoreFromHash()) { /* estado normal */ }
+await hydrateProjectsFromDatabase();
+if (!restoreFromHash()) restoreActiveProject();
+document.querySelectorAll('.control-group select').forEach(syncCustomSelect);
+document.querySelectorAll('input[type="range"]').forEach(updateRangeProgress);
+document.querySelectorAll('#frameWidth, #padding, #radius, #shadow').forEach(input => {
+  input.addEventListener('input', () => requestAnimationFrame(updateExportPreflight));
+});
+requestAnimationFrame(() => {
+  updateExportPreflight();
+  if (window.innerWidth <= 760) fitStageToViewport();
+});

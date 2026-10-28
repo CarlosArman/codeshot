@@ -1,7 +1,7 @@
 # 📸 CodeShot
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.2.0-blueviolet" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-1.3.0-blueviolet" alt="Version" />
   <img src="https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white" alt="HTML5" />
   <img src="https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white" alt="CSS3" />
   <img src="https://img.shields.io/badge/JavaScript-Vanilla-F7DF1E?logo=javascript&logoColor=black" alt="JavaScript" />
@@ -77,9 +77,13 @@ La solución combina:
 - ✅ Control de ancho del marco (400–1400 px) y selector de familia tipográfica.
 - ✅ Fondos degradados predefinidos o color personalizado.
 - ✅ Exportación a **PNG** (transparencia real) o **JPEG** (calidad ajustable) en 1×/2×/3×.
+- ✅ Packs de exportación para LinkedIn, Documentación y Social, con ZIPs de nombres deterministas y fallback de WEBP a PNG.
+- ✅ Procesamiento por lote de hasta 12 archivos de código en un ZIP PNG 2× secuencial, conservando la composición visual activa.
 - ✅ Copiar imagen al portapapeles con un clic (`ClipboardItem` API).
 - ✅ Compartir por enlace y presets de estilo guardados (versión web).
 - ✅ Compartir en redes sociales: X/Twitter, WhatsApp, LinkedIn, Reddit, Facebook + Web Share API (selector nativo en móvil).
+- ✅ Biblioteca persistente de proyectos: autoguardado, versiones recientes, colecciones, búsqueda, archivar/restaurar, respaldo/importación JSON y miniaturas reales.
+- ✅ Almacenamiento local versionado de proyectos con IndexedDB, migrado automáticamente desde y respaldado por una caché resiliente en `localStorage`.
 - ✅ Persistencia completa de preferencias en `localStorage`.
 - ✅ Detección automática de lenguaje al pegar + drag & drop de archivos.
 - ✅ Tema claro/oscuro de la interfaz.
@@ -104,6 +108,7 @@ La solución combina:
 - **Lenguaje**: HTML5, CSS3, JavaScript (vanilla, sin frameworks)
 - **Resaltado de sintaxis**: [Prism.js](https://prismjs.com/)
 - **Exportación de imágenes**: [html2canvas](https://html2canvas.hertzen.com/)
+- **Almacenamiento de la biblioteca de proyectos**: IndexedDB con fallback/caché en `localStorage`
 - **Extensión de navegador**: Chrome Extension API (Manifest V3)
 - **Extensión de editor**: VS Code Extension API (WebviewPanel, Commands)
 - **Empaquetado**: `Compress-Archive` (Chrome), `@vscode/vsce` (VS Code)
@@ -243,7 +248,7 @@ CodeShot sigue una arquitectura **vanilla JS por capas**, sin build step:
 
 - `index.html` / `webview.html` — estructura semántica de la interfaz.
 - `style.css` — todos los estilos, incluyendo iconografía dibujada con pseudo-elementos CSS (sin SVG ni emojis).
-- `script.js` — lógica de UI compartida: resaltado de sintaxis, controles de apariencia, exportación a PNG.
+- `script.js` — lógica de UI compartida: resaltado de sintaxis, controles de apariencia, exportación, biblioteca de proyectos, generación de miniaturas y persistencia en IndexedDB.
 - `manifest.json` + `background.js` — capa específica de la extensión de Chrome (Manifest V3, service worker).
 - `extension.js` — capa específica de la extensión de VS Code (WebviewPanel, comandos, puente de mensajes con el webview).
 - `vendor/` — dependencias de terceros (Prism.js, html2canvas) copiadas localmente para funcionar 100% offline y cumplir Content Security Policy.
@@ -258,6 +263,7 @@ CodeShot sigue una arquitectura **vanilla JS por capas**, sin build step:
 - [ ] Publicar la extensión en el VS Code Marketplace.
 - [x] Historial local de capturas generadas.
 - [x] Exportación a múltiples resoluciones en un único archivo ZIP.
+- [x] Biblioteca persistente de proyectos con miniaturas, respaldos y almacenamiento local versionado.
 
 ---
 

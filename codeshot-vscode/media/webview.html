@@ -171,6 +171,16 @@
         <input type="text" id="watermarkText" value="Hecho con CodeShot" placeholder="Texto de la marca de agua" autocomplete="off" />
       </section>
 
+      <section class="control-group" aria-labelledby="group-brand-kit">
+        <h2 id="group-brand-kit">Brand Kit</h2>
+        <p class="hint-text" style="margin-top:0;font-size:11.5px">Guarda tu identidad visual y aplícala en un clic.</p>
+        <div class="brand-kit-save-row">
+          <input type="text" id="brandKitNameInput" placeholder="Nombre del Brand Kit…" autocomplete="off" aria-label="Nombre del Brand Kit" />
+          <button id="saveBrandKitBtn" class="btn btn-secondary" type="button" style="width:auto;margin-top:0;padding:8px 12px">Guardar</button>
+        </div>
+        <div id="brandKitList" class="brand-kit-list" aria-live="polite"></div>
+      </section>
+
       <section class="control-group" aria-labelledby="group-exportacion">
         <h2 id="group-exportacion">Exportación</h2>
 
@@ -178,6 +188,7 @@
         <select id="exportFormat">
           <option value="png">PNG (transparencia)</option>
           <option value="jpeg">JPEG (menor tamaño)</option>
+          <option value="webp">WEBP (óptimo para web)</option>
         </select>
 
         <div id="jpegQualityWrapper" style="display:none">
@@ -192,6 +203,20 @@
           <label class="scale-option"><input type="radio" name="exportScale" value="2" checked /> 2× (recomendado)</label>
           <label class="scale-option"><input type="radio" name="exportScale" value="3" /> 3×</label>
         </fieldset>
+
+        <div class="export-preflight" aria-live="polite">
+          <div class="preflight-heading">
+            <span>Preflight de exportación</span>
+            <span class="preflight-status"><i aria-hidden="true"></i> Listo</span>
+          </div>
+          <dl class="preflight-grid">
+            <div><dt>Formato</dt><dd id="preflightFormat">PNG</dd></div>
+            <div><dt>Escala</dt><dd id="preflightScale">2×</dd></div>
+            <div><dt>Resolución</dt><dd id="preflightDimensions">—</dd></div>
+            <div><dt>Peso estimado</dt><dd id="preflightSize">Calculando…</dd></div>
+          </dl>
+          <p id="preflightHint" class="preflight-hint">PNG conserva transparencia y máxima fidelidad.</p>
+        </div>
 
         <button id="exportZipBtn" class="btn btn-secondary" type="button" style="margin-top:10px">
           <span aria-hidden="true">🗜</span> Exportar ZIP (1×/2×/3×)
@@ -289,6 +314,19 @@
     </section>
 
   </main>
+
+  <dialog id="onboardingDialog" class="onboarding-dialog" aria-labelledby="onboardingTitle">
+    <p class="eyebrow">Primera captura</p>
+    <h2 id="onboardingTitle">¿Dónde vas a publicar?</h2>
+    <p>Elige un destino para aplicar un estilo recomendado.</p>
+    <div id="onboardingDestinations" class="onboarding-destinations">
+      <button type="button" data-template="linkedin">LinkedIn <small>Post profesional</small></button>
+      <button type="button" data-template="github">GitHub <small>README o issue</small></button>
+      <button type="button" data-template="blog">Blog <small>Hero editorial</small></button>
+      <button type="button" data-template="slide">Presentación <small>Conference slide</small></button>
+    </div>
+    <button id="skipOnboardingBtn" class="onboarding-skip" type="button">Empezar desde cero</button>
+  </dialog>
 
   <script src="vendor/prism/prism.min.js"></script>
   <script src="vendor/prism/components/prism-markup.min.js"></script>

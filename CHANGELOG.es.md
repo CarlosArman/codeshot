@@ -9,7 +9,43 @@ y este proyecto sigue versionado semántico ([SemVer](https://semver.org/lang/es
 
 ---
 
-## [Unreleased]
+## [1.3.0] - 2026-10-27
+
+### ✨ Añadido
+
+- **Filtros curados de templates**: la galería de plantillas ahora filtra por estilo/destino (Profesional, Documentación, Social) y ratio vertical, manteniendo estados `aria-pressed` para navegación accesible.
+- **Procesamiento por lote de archivos de código** (app web/Chrome): permite seleccionar hasta 12 snippets/archivos, detecta su lenguaje por extensión y genera un ZIP PNG 2× por archivo usando la composición visual actual. La cola es secuencial, informa el progreso y restaura el editor original al finalizar.
+- **Packs de exportación por destino** (app web/Chrome): LinkedIn, Documentation y Social generan ZIPs con sus combinaciones reales de formato y escala. Los nombres de archivo son deterministas y WEBP usa PNG con sufijo de fallback cuando el navegador no lo soporta.
+- **Feedback de exportación accionable** (app web/Chrome): muestra estados visibles de generación, preparación y éxito; ante un fallo ofrece una explicación contextual (librería ausente, restricción de seguridad o renderizado) y un botón accesible para reintentar la descarga.
+- **Aviso de fuentes en el preflight de exportación** (app web/Chrome): detecta mediante la Font Loading API si la familia tipográfica seleccionada está disponible; cuando no lo está, avisa que la imagen se exportará con una fuente de respaldo. El aviso se actualiza al cambiar de fuente.
+- **Mejoras de la biblioteca persistente de proyectos** (app web/Chrome):
+  - Miniaturas JPEG reales generadas desde el canvas actual y guardadas con cada proyecto.
+  - Base de datos IndexedDB versionada (`codeshot-library`) para proyectos, con migración automática desde la biblioteca existente en `localStorage`.
+  - Caché/fallback resiliente en `localStorage`, conservado para un inicio inmediato y para entornos donde IndexedDB no esté disponible.
+  - Conciliación automática de IndexedDB y de los proyectos en caché por ID y `updatedAt`, conservando la copia más reciente.
+  - Respaldo/importación, autoguardado, versiones, renombrado, duplicado, archivar/restaurar y eliminación usan la misma capa de persistencia.
+  - Restaurar los valores por defecto también elimina la base local versionada de proyectos.
+
+### 📚 Documentación
+
+- Documentada la biblioteca persistente de proyectos, las miniaturas reales, el respaldo/importación JSON y la estrategia de almacenamiento con IndexedDB en los README en inglés y español.
+
+### 🔄 Cambiado
+
+- **Versión de la extensión** bumpeada a `1.3.0`.
+
+### 🐛 Corregido
+
+- **SonarQube — `role="status"` en HTML**: el `<div role="status">` del banner de feedback de exportación (`#exportFeedback`) reemplazado por el elemento nativo `<output>`, que provee la semántica de estado sin necesitar un rol explícito.
+- **SonarQube — `role="group"` en HTML (×2)**: los dos `<div role="group">` reemplazados por `<fieldset>` con `<legend class="sr-only">` — la barra de filtro de la biblioteca de proyectos y los filtros de la galería de plantillas.
+- **SonarQube — campo de archivo sin label**: añadido `<label for="importProjectsInput" class="sr-only">` al campo oculto de importación de proyectos JSON.
+- **SonarQube — promesa sin gestionar**: `autosaveActiveProject(true)` en `saveActiveProjectNow()` marcado explícitamente con `void`.
+- **SonarQube — ternario anidado en `renderProjects`**: ternario de tres ramas extraído a un bloque `if/else if/else` explícito que asigna la variable `emptyMessage`.
+- **SonarQube — template literal anidado en `renderProjects`**: el template literal condicional dentro de `item.innerHTML` descompuesto en variables previas (`restoreVersionBtn`, `archiveLabel`, `archiveIcon`, `activeLabel`).
+- **SonarQube — ternario anidado en `updateBatchFilesStatus`**: ternarios de pluralización extraídos a variables independientes `fileLabel` y `readyLabel`.
+- **SonarQube — `await` dentro de bucles (×2)**: los dos `for...of` con `await` (exportación de lote y exportación de pack) refactorizados a `Promise.all` con `.map()`.
+- **SonarQube — Complejidad Cognitiva en `exportPackBtn`**: reducida de 17 a ≤ 15 extrayendo la lógica de construcción de cada archivo a la función `generatePackFile(base, pack, definition, index)`.
+- **SonarQube — cadena `.then()` / async IIFE en el arranque**: `void hydrateProjectsFromDatabase().then(...)` y la posterior async IIFE reemplazados por la función `async startApp()` nombrada, invocada con `void startApp()`.
 
 ### 🗺️ Planeado
 

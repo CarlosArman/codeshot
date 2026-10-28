@@ -9,7 +9,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased]
+## [1.3.0] - 2026-10-27
+
+### ✨ Added
+
+- **Curated template filters**: the template gallery now filters by style/destination (Professional, Documentation, Social) and vertical ratio, retaining `aria-pressed` states for accessible navigation.
+- **Batch code-file processing** (web/Chrome app): select up to 12 snippets/files, detect their language from the extension, and generate a PNG 2× ZIP using the active visual composition. The queue runs sequentially, reports progress, and restores the original editor state afterward.
+- **Destination export packs** (web/Chrome app): LinkedIn, Documentation, and Social now generate ZIPs with their real format/scale combinations. File names are deterministic, and WEBP uses a PNG fallback suffix when unsupported.
+- **Actionable export feedback** (web/Chrome app): displays visible generating, preparing, and success states; if an export fails, it provides a contextual explanation (missing renderer, security restriction, or rendering failure) plus an accessible retry action.
+- **Font warning in the export preflight** (web/Chrome app): uses the Font Loading API to check whether the selected font family is available; when it is not, the preflight explains that the exported image will use a fallback font. The warning refreshes when the font changes.
+- **Persistent project library upgrades** (web/Chrome app):
+  - Real JPEG thumbnails generated from the current canvas and stored with each project.
+  - Versioned IndexedDB database (`codeshot-library`) for projects, with automatic migration from the existing `localStorage` library.
+  - Resilient `localStorage` cache/fallback retained for immediate startup and environments where IndexedDB is unavailable.
+  - Automatic reconciliation of IndexedDB and cached projects by project ID and `updatedAt`, preserving the latest copy.
+  - Project backup/import, autosave, versions, rename, duplication, archive/restore, and deletion now use the same persistence layer.
+  - Resetting defaults also removes the versioned local project database.
+
+### 📚 Documentation
+
+- Documented the persistent project library, real thumbnails, JSON backup/import, and IndexedDB storage strategy in both English and Spanish READMEs.
+
+### 🔄 Changed
+
+- **Extension version** bumped to `1.3.0`.
+
+### 🐛 Fixed
+
+- **SonarQube — `role="status"` in HTML**: the `<div role="status">` on the export feedback banner (`#exportFeedback`) replaced by the native `<output>` element, which provides status semantics without an explicit role.
+- **SonarQube — `role="group"` in HTML (×2)**: both `<div role="group">` elements replaced by `<fieldset>` with `<legend class="sr-only">` — the project library filter toolbar and the template gallery filter bar.
+- **SonarQube — unlabelled file input**: added `<label for="importProjectsInput" class="sr-only">` to the hidden JSON project-import field.
+- **SonarQube — unhandled promise**: `autosaveActiveProject(true)` in `saveActiveProjectNow()` explicitly marked with `void`.
+- **SonarQube — nested ternary in `renderProjects`**: three-branch ternary extracted to an explicit `if/else if/else` block assigning the `emptyMessage` variable.
+- **SonarQube — nested template literal in `renderProjects`**: the conditional template literal inside `item.innerHTML` decomposed into pre-computed variables (`restoreVersionBtn`, `archiveLabel`, `archiveIcon`, `activeLabel`).
+- **SonarQube — nested ternary in `updateBatchFilesStatus`**: pluralisation ternaries extracted to independent variables `fileLabel` and `readyLabel`.
+- **SonarQube — `await` inside loops (×2)**: both `for...of` loops with `await` (batch export and pack export) refactored to `Promise.all` with `.map()`.
+- **SonarQube — Cognitive Complexity in `exportPackBtn`**: reduced from 17 to ≤ 15 by extracting the per-file build logic into the `generatePackFile(base, pack, definition, index)` function.
+- **SonarQube — `.then()` chain / async IIFE at startup**: `void hydrateProjectsFromDatabase().then(...)` and the subsequent async IIFE replaced by the named `async startApp()` function invoked with `void startApp()`.
 
 ### 🗺️ Planned
 

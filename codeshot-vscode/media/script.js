@@ -118,6 +118,10 @@ const downloadStatus   = document.getElementById('downloadStatus');
 const zoomInBtn        = document.getElementById('zoomIn');
 const zoomOutBtn       = document.getElementById('zoomOut');
 const zoomValText      = document.getElementById('zoomVal');
+const onboardingDialog = document.getElementById('onboardingDialog');
+const onboardingDestinations = document.getElementById('onboardingDestinations');
+const skipOnboardingBtn = document.getElementById('skipOnboardingBtn');
+const ONBOARDING_STORAGE_KEY = 'codeshot-onboarding-complete';
 
 // ============ Estado ============
 let zoomLevel = 1;
@@ -817,23 +821,11 @@ const exportFormatSel   = document.getElementById('exportFormat');
 const jpegQualityWrapper = document.getElementById('jpegQualityWrapper');
 const exportQualityInput = document.getElementById('exportQuality');
 const exportQualityVal  = document.getElementById('exportQualityVal');
-
-if (exportFormatSel) {
-  exportFormatSel.addEventListener('change', () => {
-    const isJpeg = exportFormatSel.value === 'jpeg';
-    if (jpegQualityWrapper) jpegQualityWrapper.style.display = isJpeg ? '' : 'none';
-    // El botón muestra siempre el formato elegido
-    if (downloadBtn) downloadBtn.innerHTML = `<span aria-hidden="true">⬇</span> Descargar ${isJpeg ? 'JPEG' : 'PNG'}`;
-    saveAllPreferences();
-  });
-}
-
-if (exportQualityInput) {
-  exportQualityInput.addEventListener('input', () => {
-    if (exportQualityVal) exportQualityVal.textContent = exportQualityInput.value;
-    saveAllPreferences();
-  });
-}
+const preflightFormat = document.getElementById('preflightFormat');
+const preflightScale = document.getElementById('preflightScale');
+const preflightDimensions = document.getElementById('preflightDimensions');
+const preflightSize = document.getElementById('preflightSize');
+const preflightHint = document.getElementById('preflightHint');
 
 function getExportFormat() { return exportFormatSel?.value ?? 'png'; }
 function getExportQuality() { return Number.parseInt(exportQualityInput?.value ?? '90', 10) / 100; }
@@ -841,6 +833,57 @@ function getExportScale() {
   const checked = document.querySelector('input[name="exportScale"]:checked');
   return Number.parseInt(checked?.value ?? '2', 10);
 }
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return `${Math.round(bytes)} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(bytes < 10240 ? 1 : 0)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function updateExportPreflightVSC() {
+  if (!exportStage) return;
+  const format = getExportFormat();
+  const scale = getExportScale();
+  const width = Math.round(exportStage.offsetWidth * scale);
+  const height = Math.round(exportStage.offsetHeight * scale);
+  const compressionByFormat = { png: 0.34, jpeg: 0.16, webp: 0.12 };
+  const labelByFormat = { png: 'PNG', jpeg: 'JPG', webp: 'WEBP' };
+  const hintByFormat = {
+    png: 'PNG conserva transparencia y máxima fidelidad.',
+    jpeg: 'JPG reduce el peso; se exporta sobre fondo blanco.',
+    webp: 'WEBP ofrece gran calidad con un peso optimizado para web.'
+  };
+  const estimatedBytes = width * height * 4 * (compressionByFormat[format] ?? compressionByFormat.png);
+
+  if (preflightFormat) preflightFormat.textContent = labelByFormat[format];
+  if (preflightScale) preflightScale.textContent = `${scale}×`;
+  if (preflightDimensions) preflightDimensions.textContent = `${width} × ${height}`;
+  if (preflightSize) preflightSize.textContent = `≈ ${formatFileSize(estimatedBytes)}`;
+  if (preflightHint) preflightHint.textContent = hintByFormat[format];
+}
+
+if (exportFormatSel) {
+  exportFormatSel.addEventListener('change', () => {
+    const format = getExportFormat();
+    const usesQuality = format === 'jpeg' || format === 'webp';
+    if (jpegQualityWrapper) jpegQualityWrapper.style.display = usesQuality ? '' : 'none';
+    if (downloadBtn) downloadBtn.innerHTML = `<span aria-hidden="true">⬇</span> Descargar ${format === 'jpeg' ? 'JPG' : format.toUpperCase()}`;
+    updateExportPreflightVSC();
+    saveAllPreferences();
+  });
+}
+
+if (exportQualityInput) {
+  exportQualityInput.addEventListener('input', () => {
+    if (exportQualityVal) exportQualityVal.textContent = exportQualityInput.value;
+    updateExportPreflightVSC();
+    saveAllPreferences();
+  });
+}
+
+document.querySelectorAll('input[name="exportScale"]').forEach(input => {
+  input.addEventListener('change', updateExportPreflightVSC);
+});
 
 // ============ Exportar como PNG/JPEG ============
 const INVALID_FILENAME_CHARS = new Set(['<', '>', ':', '"', '/', '\\', '|', '?', '*']);
@@ -889,10 +932,15 @@ async function executeDownload() {
   const canvas = await generateCanvas();
   if (!canvas) { throw new Error('Canvas nulo'); }
   const fmt = getExportFormat();
-  const mimeType = fmt === 'jpeg' ? 'image/jpeg' : 'image/png';
-  const ext = fmt === 'jpeg' ? '.jpg' : '.png';
-  const filename = safeFilename(windowTitleInput?.value).replace(/\.png$/, ext);
-  const quality = fmt === 'jpeg' ? getExportQuality() : undefined;
+  const exportMetadata = {
+    png: { mimeType: 'image/png', extension: '.png', usesQuality: false },
+    jpeg: { mimeType: 'image/jpeg', extension: '.jpg', usesQuality: true },
+    webp: { mimeType: 'image/webp', extension: '.webp', usesQuality: true }
+  };
+  const metadata = exportMetadata[fmt] ?? exportMetadata.png;
+  const filename = safeFilename(windowTitleInput?.value).replace(/\.png$/, metadata.extension);
+  const quality = metadata.usesQuality ? getExportQuality() : undefined;
+  const mimeType = metadata.mimeType;
   const dataUrl = canvas.toDataURL(mimeType, quality);
   if (vscodeApi) {
     vscodeApi.postMessage({ type: 'saveImage', dataUrl, filename });
@@ -1164,6 +1212,10 @@ const PRESETS_KEY       = 'codeshot-presets';
 const presetNameInput   = document.getElementById('presetNameInput');
 const savePresetBtn     = document.getElementById('savePresetBtn');
 const presetList        = document.getElementById('presetList');
+const BRAND_KITS_KEY    = 'codeshot-brand-kits';
+const brandKitNameInput = document.getElementById('brandKitNameInput');
+const saveBrandKitBtn   = document.getElementById('saveBrandKitBtn');
+const brandKitList      = document.getElementById('brandKitList');
 
 function loadPresets() {
   try { return JSON.parse(readPreference(PRESETS_KEY) ?? '[]'); } catch { return []; }
@@ -1171,6 +1223,14 @@ function loadPresets() {
 
 function savePresetsToStorage(presets) {
   try { writePreference(PRESETS_KEY, JSON.stringify(presets)); } catch { /* noop */ }
+}
+
+function loadBrandKits() {
+  try { return JSON.parse(readPreference(BRAND_KITS_KEY) ?? '[]'); } catch { return []; }
+}
+
+function saveBrandKitsToStorage(kits) {
+  try { writePreference(BRAND_KITS_KEY, JSON.stringify(kits)); } catch { /* noop */ }
 }
 
 function buildCurrentPresetState() {
@@ -1185,6 +1245,8 @@ function buildCurrentPresetState() {
     padding:       paddingInput?.value,
     radius:        radiusInput?.value,
     shadow:        shadowInput?.value,
+    showWatermark: showWatermarkChk?.checked ? '1' : '0',
+    watermarkText: watermarkTextInput?.value,
     activeBg:      bgSwatchesContainer?.querySelector('.swatch.active')?.style.background ?? '',
     customBgActive: customBgToggle?.checked ? '1' : '0',
     customBgColor:  customBgColor?.value
@@ -1242,6 +1304,14 @@ function applyPresetAppearanceVSC(state) {
   applyPresetPaddingVSC(state);
   applyPresetRadiusVSC(state);
   applyPresetShadowVSC(state);
+  if (state.showWatermark !== undefined && showWatermarkChk) {
+    showWatermarkChk.checked = state.showWatermark === '1';
+    watermark?.classList.toggle('visible', showWatermarkChk.checked);
+  }
+  if (state.watermarkText !== undefined && watermarkTextInput) {
+    watermarkTextInput.value = state.watermarkText;
+    if (watermark) watermark.textContent = state.watermarkText || 'Hecho con CodeShot';
+  }
 }
 
 function applyPresetBgStateVSC(state) {
@@ -1298,6 +1368,43 @@ function renderPresets() {
   });
 }
 
+function renderBrandKitsVSC() {
+  if (!brandKitList) return;
+  const kits = loadBrandKits();
+  brandKitList.innerHTML = '';
+  if (kits.length === 0) {
+    brandKitList.innerHTML = '<p class="brand-kit-empty">Aún no has guardado una identidad visual.</p>';
+    return;
+  }
+  kits.forEach((kit, index) => {
+    const item = document.createElement('article');
+    const preview = kit.state.customBgActive === '1' ? kit.state.customBgColor : kit.state.activeBg;
+    item.className = 'brand-kit-card';
+    item.innerHTML = `<button class="brand-kit-apply" type="button" title="Aplicar ${kit.name}"><span class="brand-kit-mark" style="background:${preview || 'linear-gradient(135deg,#312e81,#7c3aed)'}"></span><span><strong>${kit.name}</strong><small>${kit.state.fontFamily || 'fira-code'} · ${kit.state.frameStyle || 'mac'}</small></span></button><button class="brand-kit-delete" type="button" aria-label="Eliminar Brand Kit ${kit.name}">×</button>`;
+    item.querySelector('.brand-kit-apply').addEventListener('click', () => {
+      applyPresetState(kit.state);
+      requestAnimationFrame(updateExportPreflightVSC);
+    });
+    item.querySelector('.brand-kit-delete').addEventListener('click', () => {
+      saveBrandKitsToStorage(loadBrandKits().filter((_, currentIndex) => currentIndex !== index));
+      renderBrandKitsVSC();
+    });
+    brandKitList.appendChild(item);
+  });
+}
+
+if (saveBrandKitBtn) {
+  saveBrandKitBtn.addEventListener('click', () => {
+    const name = brandKitNameInput?.value.trim();
+    if (!name) { brandKitNameInput?.focus(); return; }
+    const kits = loadBrandKits();
+    kits.push({ name, state: buildCurrentPresetState() });
+    saveBrandKitsToStorage(kits);
+    if (brandKitNameInput) brandKitNameInput.value = '';
+    renderBrandKitsVSC();
+  });
+}
+
 if (savePresetBtn) {
   savePresetBtn.addEventListener('click', () => {
     const name = presetNameInput?.value.trim();
@@ -1310,10 +1417,52 @@ if (savePresetBtn) {
   });
 }
 
+const VSC_TEMPLATE_STYLES = {
+  linkedin: { frameWidth: 920, padding: 72, radius: 16, shadow: 65, background: 'linear-gradient(135deg, #312e81, #7c3aed 55%, #c4b5fd)' },
+  github: { frameWidth: 860, padding: 56, radius: 10, shadow: 48, background: 'linear-gradient(135deg, #111827, #374151)' },
+  blog: { frameWidth: 1040, padding: 84, radius: 18, shadow: 60, background: 'linear-gradient(135deg, #f97316, #fb7185)' },
+  slide: { frameWidth: 1140, padding: 88, radius: 12, shadow: 70, background: 'linear-gradient(135deg, #0f766e, #22d3ee)' }
+};
+
+function completeOnboardingVSC() {
+  writePreference(ONBOARDING_STORAGE_KEY, '1');
+  onboardingDialog?.close();
+}
+
+function applyOnboardingTemplateVSC(name) {
+  const template = VSC_TEMPLATE_STYLES[name];
+  if (!template) return;
+  frameWidthInput.value = template.frameWidth;
+  paddingInput.value = template.padding;
+  radiusInput.value = template.radius;
+  shadowInput.value = template.shadow;
+  [frameWidthInput, paddingInput, radiusInput, shadowInput].forEach(input => input.dispatchEvent(new Event('input', { bubbles: true })));
+  applyBackground(template.background);
+  completeOnboardingVSC();
+  requestAnimationFrame(updateExportPreflightVSC);
+}
+
+function setupOnboardingVSC() {
+  if (readPreference(ONBOARDING_STORAGE_KEY) !== '1') {
+    requestAnimationFrame(() => onboardingDialog?.showModal());
+  }
+  onboardingDestinations?.addEventListener('click', event => {
+    const destination = event.target.closest('button[data-template]');
+    if (destination) applyOnboardingTemplateVSC(destination.dataset.template);
+  });
+  skipOnboardingBtn?.addEventListener('click', completeOnboardingVSC);
+}
+
 // ============ Arranque ============
 init();
 syncTitlebarVisibility();
 renderPresets();
+renderBrandKitsVSC();
+setupOnboardingVSC();
+document.querySelectorAll('#frameWidth, #padding, #radius, #shadow').forEach(input => {
+  input.addEventListener('input', () => requestAnimationFrame(updateExportPreflightVSC));
+});
+requestAnimationFrame(updateExportPreflightVSC);
 
 if (vscodeApi) {
   vscodeApi.postMessage({ type: 'ready' });
