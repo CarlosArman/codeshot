@@ -653,7 +653,10 @@ function init() {
 
 function applyCodeThemeMode() {
   if (!codeArea) return;
-  codeArea.classList.toggle('light-editor', LIGHT_PRISM_THEMES.has(codeThemeSel?.value ?? 'tomorrow'));
+  const theme = codeThemeSel?.value ?? 'tomorrow';
+  codeArea.classList.toggle('light-editor', LIGHT_PRISM_THEMES.has(theme));
+  codeArea.classList.toggle('theme-funky', theme === 'funky');
+  codeArea.classList.toggle('theme-coy', theme === 'coy');
 }
 
 function applyFontFamily(key) {
