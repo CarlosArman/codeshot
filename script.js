@@ -12,6 +12,16 @@ function clearAllPreferences() {
   } catch { /* noop */ }
 }
 
+// ============ Idioma (i18n) ============
+// El toggle de idioma lo gestiona i18n.js (setupLangToggle)
+const langToggleBtn = document.getElementById('langToggleBtn');
+document.addEventListener('i18n:changed', (e) => {
+  const lang = e.detail?.lang;
+  document.querySelectorAll('.lang-toggle-btn').forEach(btn => {
+    btn.textContent = lang === 'en' ? 'EN' : 'ES';
+  });
+});
+
 // ============ Tema claro/oscuro ============
 const themeToggleBtn = document.getElementById('themeToggleBtn');
 const themeIcon = document.getElementById('themeIcon');
@@ -28,8 +38,9 @@ function applyTheme(theme) {
   writePreference(THEME_STORAGE_KEY, theme);
   if (themeIcon) themeIcon.textContent = theme === 'light' ? '☀️' : '🌙';
   if (themeToggleBtn) {
-    themeToggleBtn.setAttribute('aria-label',
-      theme === 'light' ? 'Cambiar a tema oscuro' : 'Cambiar a tema claro');
+    const key = theme === 'light' ? 'theme_to_dark' : 'theme_to_light';
+    const fallback = theme === 'light' ? 'Cambiar a tema oscuro' : 'Cambiar a tema claro';
+    themeToggleBtn.setAttribute('aria-label', window.t ? window.t(key) : fallback);
   }
 }
 
@@ -52,8 +63,9 @@ function applySidebarState(collapsed) {
   if (collapsed && controlsPanel?.contains(document.activeElement)) sidebarToggleBtn.focus();
   appMain.classList.toggle('sidebar-collapsed', collapsed);
   sidebarToggleBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
-  sidebarToggleBtn.setAttribute('aria-label',
-    collapsed ? 'Expandir panel de configuración' : 'Contraer panel de configuración');
+  const sidebarKey = collapsed ? 'sidebar_expand' : 'sidebar_collapse';
+  const sidebarFallback = collapsed ? 'Expandir panel de configuración' : 'Contraer panel de configuración';
+  sidebarToggleBtn.setAttribute('aria-label', window.t ? window.t(sidebarKey) : sidebarFallback);
   writePreference(SIDEBAR_STORAGE_KEY, collapsed ? '1' : '0');
 }
 
@@ -157,7 +169,8 @@ const SELECT_ICONS = {
   yaml: 'YML', markdown: 'MD', png: 'PNG', jpeg: 'JPG',
   'fira-code': 'ƒ', jetbrains: 'JB', cascadia: '⌁', 'source-code': 'SC', consolas: 'C',
   tomorrow: '◐', okaidia: '◒', dark: '●', twilight: '◑', funky: '✦',
-  default: '☼', coy: '◌', solarizedlight: '☀', onelight: '◍'
+  default: '☼', coy: '◌', solarizedlight: '☀', onelight: '◍',
+  es: '🌐', en: '🌐'
 };
 
 function closeCustomSelects(except = null) {
@@ -644,7 +657,7 @@ function init() {
   restoreAllPreferences();
   const template = CODE_TEMPLATES[languageSel?.value] || CODE_TEMPLATES.javascript;
   if (codeInput && !codeInput.value) codeInput.value = template;
-  if (codeInput) codeInput.placeholder = 'Escribe o pega tu código aquí…';
+  if (codeInput) codeInput.placeholder = window.t ? window.t('code_placeholder') : 'Escribe o pega tu código aquí…';
   highlightCodeNow();
   updateLineNumbers();
   updateWindowTitleText();
@@ -878,7 +891,7 @@ if (clearCodeBtn) {
 }
 if (resetDefaultsBtn) {
   resetDefaultsBtn.addEventListener('click', () => {
-    if (confirm('¿Restaurar todos los ajustes a los valores por defecto?')) { clearAllPreferences(); location.reload(); }
+    if (confirm(window.t ? window.t('confirm_reset') : '¿Restaurar todos los ajustes a los valores por defecto?')) { clearAllPreferences(); location.reload(); }
   });
 }
 
