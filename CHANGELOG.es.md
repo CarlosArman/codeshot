@@ -9,7 +9,36 @@ y este proyecto sigue versionado semántico ([SemVer](https://semver.org/lang/es
 
 ---
 
-## [Sin publicar]
+## [1.4.0] - 2026-10-28
+
+### ✨ Añadido
+
+- **Interfaz bilingüe (ES / EN)** — toda la UI (app web y extensión de VS Code) está disponible en español e inglés. Un botón compacto **ES / EN** en el encabezado cambia el idioma instantáneamente sin recargar la página.
+- **Módulo `i18n.js`** — IIFE sin dependencias externas compartido entre la app web y la extensión de VS Code:
+  - Aplica traducciones mediante atributos DOM `data-i18n`, `data-i18n-html`, `data-i18n-placeholder`, `data-i18n-aria-label` y `data-i18n-title`.
+  - Expone `window.t(key, vars)` para interpolación dinámica de cadenas (ej. `{name}`, `{count}`).
+  - Persiste el idioma seleccionado en `localStorage` bajo la clave `codeshot-lang` y lo restaura al recargar.
+  - Configuración autocontenida: se inicializa en `DOMContentLoaded` y vincula el botón toggle sin depender de `script.js`.
+- **Cobertura de traducción completa**: todos los encabezados de sección, etiquetas, botones, placeholders, atributos ARIA, el diálogo de onboarding, la galería de plantillas, el panel de preflight, la barra de acciones rápidas, el texto de la marca de agua y los mensajes de estado dinámicos están traducidos.
+- **Modal de onboarding — título "Presentación"**: el título del destino "slide" es ahora traducible (`template_slide_title`), mostrando "Presentación" en ES y "Presentation" en EN en los tres aplicativos (web, Chrome, VS Code).
+- **Toggle de idioma en el modal de onboarding**: un botón `.lang-toggle-btn` aparece ahora en el diálogo de onboarding de los tres aplicativos, permitiendo cambiar de idioma antes de elegir el destino de la plantilla.
+- **`<select>` reemplazado por `<button class="lang-toggle-btn">`**: el select nativo para cambiar idioma se ha sustituido por un botón simple. Todos los `.lang-toggle-btn` son gestionados por `i18n.js` vía `querySelectorAll`, sin dependencia de `enhanceSelects()` ni de `script.js`.
+- **Bug de doble handler en el toggle de idioma corregido**: `i18n.js` y `script.js` vinculaban ambos un listener `click` a `#langToggleBtn`, lo que hacía que el idioma se alternara y se revirtiera inmediatamente. El handler fue eliminado de `script.js`; solo `i18n.js` gestiona el clic.
+
+### 🔄 Cambiado
+
+- **Versión** bumpeada a `1.4.0`.
+- Los elementos HTML usan atributos `data-i18n*` en lugar de texto en español hardcodeado, permitiendo que el mismo marcado sirva para ambos idiomas.
+
+### 🐛 Corregido
+
+- **SonarQube — optional chain (×4)**: `window.getCurrentLang && window.getCurrentLang()` → `window.getCurrentLang?.()` y `e.detail && e.detail.lang` → `e.detail?.lang` en `codeshot-web/script.js` y `codeshot-vscode/media/script.js`.
+- **SonarQube — ternarios anidados (×4)**: cadenas de fallback en `applyTheme` y `applySidebarState` extraídas a variables independientes `fallback` / `sidebarFallback` en ambos scripts.
+- **SonarQube — optional chain en `i18n.js`**: `T[lang] && T[lang][key]` reemplazado por `T[lang]?.[key]`.
+
+---
+
+## [1.3.1] - 2026-10-28
 
 ### 🎨 Marca
 

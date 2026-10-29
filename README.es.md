@@ -1,7 +1,7 @@
 # 📸 CodeShot
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.3.1-blueviolet" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-1.4.0-blueviolet" alt="Version" />
   <img src="https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white" alt="HTML5" />
   <img src="https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white" alt="CSS3" />
   <img src="https://img.shields.io/badge/JavaScript-Vanilla-F7DF1E?logo=javascript&logoColor=black" alt="JavaScript" />
@@ -14,6 +14,7 @@
   <img src="https://img.shields.io/badge/Design-Offline%20First-informational" alt="Design" />
   <img src="https://img.shields.io/badge/Platforms-Web%20%7C%20Chrome%20%7C%20VS%20Code-blue" alt="Platforms" />
   <img src="https://img.shields.io/badge/Accessibility-WCAG%202.2-success" alt="Accessibility" />
+  <img src="https://img.shields.io/badge/i18n-ES%20%7C%20EN-brightgreen" alt="i18n" />
   <img src="https://img.shields.io/badge/Status-Portfolio%20Ready-yellow" alt="Status" />
   <img src="https://img.shields.io/github/actions/workflow/status/CarlosArman/codeshot/deploy-pages.yml?label=GitHub%20Pages&logo=githubactions&logoColor=white" alt="GitHub Pages deploy" />
 </p>
@@ -88,6 +89,7 @@ La solución combina:
 - ✅ Persistencia completa de preferencias en `localStorage`.
 - ✅ Detección automática de lenguaje al pegar + drag & drop de archivos.
 - ✅ Tema claro/oscuro de la interfaz.
+- ✅ **Interfaz bilingüe (ES / EN)** — cambia entre español e inglés instantáneamente con el botón de idioma; preferencia persistida entre sesiones.
 
 ### Engineering Value
 
@@ -95,6 +97,7 @@ La solución combina:
 - ✅ Librerías de terceros vendorizadas localmente (sin CDNs), compatibles con Content Security Policy estricta.
 - ✅ Controles de interfaz (candados, flechas, controles de ventana) dibujados en CSS; la marca oficial de diamante de CodeShot se entrega en SVG y PNG para un branding consistente entre plataformas.
 - ✅ Separación clara entre lógica de UI (`script.js`) y lógica específica de cada plataforma (`background.js` para Chrome, `extension.js` para VS Code).
+- ✅ Módulo i18n autocontenido (`i18n.js`) — IIFE sin dependencias externas con traducción del DOM mediante atributos `data-i18n*`, función `window.t(key, vars)` para cadenas dinámicas y persistencia en `localStorage`.
 
 ### Portfolio Value
 
@@ -143,6 +146,7 @@ CodeShot
 │   ├── index.html
 │   ├── style.css
 │   ├── script.js
+│   ├── i18n.js                    # Sistema bilingüe ES/EN (sin dependencias)
 │   ├── manifest.json              # Manifest V3 (extensión de Chrome)
 │   ├── background.js              # Service worker de la extensión
 │   ├── icons/                     # Iconos Chrome + SVG oficial de CodeShot
@@ -158,6 +162,8 @@ CodeShot
 │   ├── extension.js               # Lógica del WebviewPanel y comandos
 │   ├── package.json               # Manifiesto de la extensión
 │   ├── media/                     # HTML/CSS/JS del webview (comparte diseño con codeshot-web/)
+│   │   ├── i18n.js                # Copia del módulo bilingüe ES/EN compartido
+│   │   └── ...
 │   └── images/icon.png            # Icono de la extensión
 │
 └── README.md
@@ -257,9 +263,10 @@ Más detalles en el [README de la extensión de VS Code](./codeshot-vscode/READM
 
 CodeShot sigue una arquitectura **vanilla JS por capas**, sin build step:
 
-- `index.html` / `webview.html` — estructura semántica de la interfaz.
+- `index.html` / `webview.html` — estructura semántica de la interfaz con atributos `data-i18n*` en todos los elementos traducibles.
 - `style.css` — estilos de la aplicación y controles de interfaz dibujados con CSS; el icono oficial de marca se carga desde un asset SVG local.
 - `script.js` — lógica de UI compartida: resaltado de sintaxis, controles de apariencia, exportación, biblioteca de proyectos, generación de miniaturas y persistencia en IndexedDB.
+- `i18n.js` — módulo bilingüe autocontenido (ES/EN): aplica traducciones mediante atributos `data-i18n*` del DOM, expone `window.t(key, vars)` para cadenas dinámicas y persiste la preferencia de idioma en `localStorage`. Compartido entre la app web y la extensión de VS Code.
 - `manifest.json` + `background.js` — capa específica de la extensión de Chrome (Manifest V3, service worker).
 - `extension.js` — capa específica de la extensión de VS Code (WebviewPanel, comandos, puente de mensajes con el webview).
 - `vendor/` — dependencias de terceros (Prism.js, html2canvas) copiadas localmente para funcionar 100% offline y cumplir Content Security Policy.
@@ -275,6 +282,7 @@ CodeShot sigue una arquitectura **vanilla JS por capas**, sin build step:
 - [x] Historial local de capturas generadas.
 - [x] Exportación a múltiples resoluciones en un único archivo ZIP.
 - [x] Biblioteca persistente de proyectos con miniaturas, respaldos y almacenamiento local versionado.
+- [x] Interfaz bilingüe (ES / EN) con cambio de idioma instantáneo y preferencia persistente.
 
 ---
 

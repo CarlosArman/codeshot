@@ -1,7 +1,7 @@
 # 📸 CodeShot
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-1.3.1-blueviolet" alt="Version" />
+  <img src="https://img.shields.io/badge/Version-1.4.0-blueviolet" alt="Version" />
   <img src="https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white" alt="HTML5" />
   <img src="https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white" alt="CSS3" />
   <img src="https://img.shields.io/badge/JavaScript-Vanilla-F7DF1E?logo=javascript&logoColor=black" alt="JavaScript" />
@@ -14,6 +14,7 @@
   <img src="https://img.shields.io/badge/Design-Offline%20First-informational" alt="Design" />
   <img src="https://img.shields.io/badge/Platforms-Web%20%7C%20Chrome%20%7C%20VS%20Code-blue" alt="Platforms" />
   <img src="https://img.shields.io/badge/Accessibility-WCAG%202.2-success" alt="Accessibility" />
+  <img src="https://img.shields.io/badge/i18n-ES%20%7C%20EN-brightgreen" alt="i18n" />
   <img src="https://img.shields.io/badge/Status-Portfolio%20Ready-yellow" alt="Status" />
   <img src="https://img.shields.io/github/actions/workflow/status/CarlosArman/codeshot/deploy-pages.yml?label=GitHub%20Pages&logo=githubactions&logoColor=white" alt="GitHub Pages deploy" />
 </p>
@@ -88,6 +89,7 @@ The solution combines:
 - ✅ Full preference persistence in `localStorage`.
 - ✅ Automatic language detection on paste + file drag & drop.
 - ✅ Light/dark UI theme.
+- ✅ **Bilingual UI (ES / EN)** — switch between Spanish and English instantly with the language toggle button; preference persisted across sessions.
 
 ### Engineering Value
 
@@ -95,6 +97,7 @@ The solution combines:
 - ✅ Third-party libraries vendored locally (no CDNs), compatible with strict Content Security Policy.
 - ✅ UI controls (locks, arrows, window controls) drawn in CSS; the official CodeShot diamond mark is delivered as SVG and rasterized PNG assets for consistent cross-platform branding.
 - ✅ Clear separation between shared UI logic (`script.js`) and platform-specific logic (`background.js` for Chrome, `extension.js` for VS Code).
+- ✅ Self-contained i18n module (`i18n.js`) — zero-dependency IIFE with `data-i18n*` attribute-driven DOM translation, `window.t(key, vars)` for dynamic strings, and `localStorage` persistence.
 
 ### Portfolio Value
 
@@ -143,6 +146,7 @@ CodeShot
 │   ├── index.html
 │   ├── style.css
 │   ├── script.js
+│   ├── i18n.js                    # Bilingual ES/EN system (no dependencies)
 │   ├── manifest.json              # Manifest V3 (Chrome extension)
 │   ├── background.js              # Extension service worker
 │   ├── icons/                     # Chrome icons + official CodeShot brand SVG
@@ -158,6 +162,8 @@ CodeShot
 │   ├── extension.js               # WebviewPanel logic and commands
 │   ├── package.json               # Extension manifest
 │   ├── media/                     # Webview HTML/CSS/JS (shares design with codeshot-web/)
+│   │   ├── i18n.js                # Copy of the shared bilingual ES/EN module
+│   │   └── ...
 │   └── images/icon.png            # Extension icon
 │
 └── README.md
@@ -257,9 +263,10 @@ More details in the [VS Code extension README](./codeshot-vscode/README.md).
 
 CodeShot follows a **layered vanilla JS architecture**, with no build step:
 
-- `index.html` / `webview.html` — semantic UI structure.
+- `index.html` / `webview.html` — semantic UI structure with `data-i18n*` attributes on all translatable elements.
 - `style.css` — application styles and CSS-drawn UI controls; the official brand icon is loaded from a local SVG asset.
 - `script.js` — shared UI logic: syntax highlighting, appearance controls, export, project library, thumbnail generation, and IndexedDB persistence.
+- `i18n.js` — self-contained bilingual module (ES/EN): applies translations via `data-i18n*` DOM attributes, exposes `window.t(key, vars)` for dynamic strings, and persists language preference in `localStorage`. Shared between the web app and VS Code extension.
 - `manifest.json` + `background.js` — Chrome-specific layer (Manifest V3, service worker).
 - `extension.js` — VS Code-specific layer (WebviewPanel, commands, message bridge with the webview).
 - `vendor/` — third-party dependencies (Prism.js, html2canvas) copied locally to work 100% offline and comply with Content Security Policy.
@@ -275,6 +282,7 @@ CodeShot follows a **layered vanilla JS architecture**, with no build step:
 - [x] Local history of generated screenshots.
 - [x] Multi-resolution ZIP export.
 - [x] Persistent project library with thumbnails, backups, and versioned local storage.
+- [x] Bilingual interface (ES / EN) with instant language toggle and persistent preference.
 
 ---
 

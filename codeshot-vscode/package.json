@@ -2,7 +2,7 @@
   "name": "codeshot",
   "displayName": "CodeShot — Capturas de código elegantes",
   "description": "Crea capturas de código elegantes con marcos de ventana, fondos degradados y temas de sintaxis, sin salir de VS Code.",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "publisher": "codeshot",
   "license": "MIT",
   "icon": "images/icon.png",

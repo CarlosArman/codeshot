@@ -9,7 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## [Unreleased]
+## [1.4.0] - 2026-10-28
+
+### ✨ Added
+
+- **Bilingual interface (ES / EN)** — the entire UI (web app and VS Code extension) is now available in Spanish and English. A compact **ES / EN** toggle button in the header switches the language instantly without reloading the page.
+- **`i18n.js` module** — zero-dependency IIFE shared between the web app and VS Code extension:
+  - Applies translations via `data-i18n`, `data-i18n-html`, `data-i18n-placeholder`, `data-i18n-aria-label`, and `data-i18n-title` DOM attributes.
+  - Exposes `window.t(key, vars)` for dynamic string interpolation (e.g. `{name}`, `{count}`).
+  - Persists the selected language in `localStorage` under the key `codeshot-lang` and restores it on reload.
+  - Self-contained setup: auto-initialises on `DOMContentLoaded` and binds the toggle button without relying on `script.js`.
+- **Full translation coverage**: all section headings, labels, buttons, placeholders, ARIA attributes, onboarding dialog, template gallery, preflight panel, quick-action bar, watermark text, and dynamic status messages are translated.
+- **Onboarding modal — "Presentación" title**: the slide destination title is now translatable (`template_slide_title`) so it renders as "Presentación" in ES and "Presentation" in EN across all three apps (web, Chrome, VS Code).
+- **Language toggle in the onboarding modal**: a `.lang-toggle-btn` button is now visible in the onboarding dialog of all three apps, allowing users to switch language before choosing a destination template.
+- **`<select>` replaced by `<button class="lang-toggle-btn">`**: the native select element for language toggling has been replaced with a plain button. All `.lang-toggle-btn` elements are managed by `i18n.js` via `querySelectorAll` — no dependency on `enhanceSelects()` or `script.js`.
+- **Language toggle double-handler bug fixed**: both `i18n.js` and `script.js` previously bound a `click` listener to `#langToggleBtn`, causing the language to toggle and immediately revert. The handler was removed from `script.js`; only `i18n.js` owns the click logic.
+
+### � Changed
+
+- **Version** bumped to `1.4.0`.
+- HTML elements use `data-i18n*` attributes instead of hardcoded Spanish text, allowing the same markup to serve both languages.
+
+### 🐛 Fixed
+
+- **SonarQube — optional chain (×4)**: `window.getCurrentLang && window.getCurrentLang()` → `window.getCurrentLang?.()` and `e.detail && e.detail.lang` → `e.detail?.lang` in both `codeshot-web/script.js` and `codeshot-vscode/media/script.js`.
+- **SonarQube — nested ternaries (×4)**: fallback strings in `applyTheme` and `applySidebarState` extracted to independent `fallback` / `sidebarFallback` variables in both scripts.
+- **SonarQube — optional chain in `i18n.js`**: `T[lang] && T[lang][key]` replaced with `T[lang]?.[key]`.
+
+---
+
+## [1.3.1] - 2026-10-28
 
 ### 🎨 Brand
 
@@ -18,11 +47,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Three-app integration**: the web app and Chrome extension now load the official SVG in their header and onboarding; the VS Code webview replaces the camera emoji with the same official mark, while the Activity Bar and marketplace icon use refined assets.
 - **Compact themed wordmarks**: reduced the dark/light logo panels to content-fit width and centered their icon vertically.
 
-### 📦 Distribution
+### �� Distribution
 
 - **Release 1.3.1**: synchronized Chrome and VS Code manifest versions and regenerated both distribution packages from the refined source assets.
 
-### ⚙️ CI/CD
+### ⚙️ CI / CD
 
 - **Automatic GitHub Pages deployment** (`.github/workflows/deploy-pages.yml`): push to `main` now automatically deploys `codeshot-web/` to the `gh-pages` branch using `JamesIves/github-pages-deploy-action`. The workflow only triggers when files inside `codeshot-web/**` change; existing files in `gh-pages` not present in `codeshot-web/` (e.g. `vendor/`) are preserved (`clean: false`). Manual dispatch via `workflow_dispatch` is also supported.
 

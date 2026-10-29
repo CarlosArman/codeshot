@@ -12,7 +12,7 @@
 </head>
 <body>
 
-  <a href="#codeInput" class="skip-link">Saltar al editor de código</a>
+  <a href="#codeInput" class="skip-link" data-i18n="skip_to_editor">Saltar al editor de código</a>
 
   <header class="app-header">
     <div class="brand">
@@ -20,14 +20,15 @@
       <h1>Code<span class="brand-sub">Shot</span></h1>
     </div>
     <div class="header-actions">
-      <button id="themeToggleBtn" class="btn-icon btn-theme-toggle" type="button" aria-label="Cambiar a tema claro" title="Cambiar tema claro/oscuro">
+      <button id="themeToggleBtn" class="btn-icon btn-theme-toggle" type="button" aria-label="Cambiar a tema claro" data-i18n-aria-label="theme_to_light" title="Cambiar tema claro/oscuro" data-i18n-title="theme_toggle_title">
         <span id="themeIcon" aria-hidden="true">🌙</span>
       </button>
+      <button id="langToggleBtn" class="btn-icon lang-toggle-btn" type="button" aria-label="Idioma / Language" title="ES / EN" style="font-size:11px;font-weight:700;letter-spacing:.5px;min-width:36px">ES</button>
       <button id="copyImgBtn" class="btn btn-secondary-header" type="button" title="Ctrl+Shift+C">
-        <span aria-hidden="true">📋</span> Copiar
+        <span aria-hidden="true">📋</span> <span data-i18n="copy">Copiar</span>
       </button>
       <button id="downloadBtn" class="btn btn-primary" type="button" title="Ctrl+Enter">
-        <span aria-hidden="true">⬇</span> Descargar PNG
+        <span aria-hidden="true">⬇</span> <span data-i18n="download_png">Descargar PNG</span>
       </button>
     </div>
   </header>
@@ -36,47 +37,47 @@
 
   <main class="app-main">
 
-    <button id="sidebarToggleBtn" class="sidebar-toggle" type="button" aria-label="Contraer panel de configuración" aria-expanded="true" aria-controls="controlsPanel">
+    <button id="sidebarToggleBtn" class="sidebar-toggle" type="button" aria-label="Contraer panel de configuración" data-i18n-aria-label="sidebar_collapse" aria-expanded="true" aria-controls="controlsPanel">
       <span class="sidebar-toggle-icon" aria-hidden="true">‹</span>
     </button>
 
     <aside class="controls-panel" id="controlsPanel" aria-label="Panel de configuración">
 
       <section class="control-group" aria-labelledby="group-ventana">
-        <h2 id="group-ventana">Ventana</h2>
-        <label for="frameStyle">Estilo de marco</label>
+        <h2 id="group-ventana" data-i18n="section_window">Ventana</h2>
+        <label for="frameStyle" data-i18n="frame_style">Estilo de marco</label>
         <select id="frameStyle">
           <option value="mac">macOS</option>
           <option value="windows">Windows</option>
-          <option value="browser">Navegador</option>
+          <option value="browser" data-i18n="frame_browser">Navegador</option>
           <option value="ubuntu">Ubuntu / Linux</option>
-          <option value="none">Sin marco</option>
+          <option value="none" data-i18n="frame_none">Sin marco</option>
         </select>
 
-        <label for="windowTitle">Título de la ventana</label>
+        <label for="windowTitle" data-i18n="window_title_label">Título de la ventana</label>
         <input type="text" id="windowTitle" value="untitled.js" autocomplete="off" />
 
-        <label for="frameWidth">Ancho del marco: <span id="frameWidthVal">680</span>px</label>
+        <label for="frameWidth"><span data-i18n="frame_width_label">Ancho del marco:</span> <span id="frameWidthVal">680</span>px</label>
         <input type="range" id="frameWidth" min="400" max="1400" value="680"
                aria-valuemin="400" aria-valuemax="1400" aria-valuenow="680" aria-valuetext="680 píxeles" />
 
         <label class="checkbox-label">
           <input type="checkbox" id="showTitlebar" checked />
-          Mostrar barra de título
+          <span data-i18n="show_titlebar">Mostrar barra de título</span>
         </label>
       </section>
 
       <section class="control-group" aria-labelledby="group-codigo">
-        <h2 id="group-codigo">Código</h2>
+        <h2 id="group-codigo" data-i18n="section_code">Código</h2>
         <p class="hint-text" id="codeHint">
           <span aria-hidden="true">💡</span>
-          Escribe o pega tu código directamente en el editor de la vista previa.
+          <span data-i18n="code_hint">Escribe o pega tu código directamente en el editor de la vista previa.</span>
         </p>
         <button id="clearCodeBtn" class="btn btn-secondary" type="button">
-          <span aria-hidden="true">🗑</span> Limpiar código
+          <span aria-hidden="true">🗑</span> <span data-i18n="clear_code">Limpiar código</span>
         </button>
 
-        <label for="fontFamily">Familia de fuente</label>
+        <label for="fontFamily" data-i18n="font_family">Familia de fuente</label>
         <select id="fontFamily">
           <option value="fira-code">Fira Code</option>
           <option value="jetbrains">JetBrains Mono</option>
@@ -85,7 +86,7 @@
           <option value="consolas">Consolas</option>
         </select>
 
-        <label for="language">Lenguaje</label>
+        <label for="language" data-i18n="language">Lenguaje</label>
         <select id="language">
           <option value="javascript">JavaScript</option>
           <option value="typescript">TypeScript</option>
@@ -108,158 +109,158 @@
           <option value="markdown">Markdown</option>
         </select>
 
-        <label for="codeTheme">Tema del editor</label>
+        <label for="codeTheme" data-i18n="code_theme">Tema del editor</label>
         <select id="codeTheme">
           <option value="tomorrow">Tomorrow Night</option>
           <option value="okaidia">Okaidia</option>
           <option value="dark">Dark</option>
           <option value="twilight">Twilight</option>
           <option value="funky">Funky</option>
-          <option value="default">Default (claro)</option>
-          <option value="coy">Coy (claro)</option>
+          <option value="default" data-i18n="theme_default_light">Default (claro)</option>
+          <option value="coy" data-i18n="theme_coy_light">Coy (claro)</option>
           <option value="solarizedlight">Solarized Light</option>
-          <option value="onelight">One Light (claro)</option>
+          <option value="onelight" data-i18n="theme_onelight">One Light (claro)</option>
         </select>
 
-        <label for="fontSize">Tamaño de fuente: <span id="fontSizeVal">14</span>px</label>
+        <label for="fontSize"><span data-i18n="font_size_label">Tamaño de fuente:</span> <span id="fontSizeVal">14</span>px</label>
         <input type="range" id="fontSize" min="10" max="28" value="14"
                aria-valuemin="10" aria-valuemax="28" aria-valuenow="14" aria-valuetext="14 píxeles" />
 
         <label class="checkbox-label">
           <input type="checkbox" id="showLineNumbers" />
-          Números de línea
+          <span data-i18n="line_numbers">Números de línea</span>
         </label>
 
-        <label for="lineStart">Número de línea inicial</label>
+        <label for="lineStart" data-i18n="line_start">Número de línea inicial</label>
         <input type="number" id="lineStart" min="1" max="9999" value="1" />
 
         <p id="codeStats" class="code-stats" aria-live="polite"></p>
       </section>
 
       <section class="control-group" aria-labelledby="group-fondo">
-        <h2 id="group-fondo">Fondo</h2>
-        <span id="bgSwatchesLabel" class="swatches-group-label">Gradiente / color</span>
+        <h2 id="group-fondo" data-i18n="section_background">Fondo</h2>
+        <span id="bgSwatchesLabel" class="swatches-group-label" data-i18n="gradient_color">Gradiente / color</span>
         <div class="bg-swatches" id="bgSwatches" role="radiogroup" aria-labelledby="bgSwatchesLabel"></div>
 
         <label class="checkbox-label">
           <input type="checkbox" id="customBgToggle" />
-          Color personalizado
+          <span data-i18n="custom_color">Color personalizado</span>
         </label>
-        <label for="customBgColor" class="sr-only">Selector de color personalizado para el fondo</label>
+        <label for="customBgColor" class="sr-only" data-i18n="custom_bg_label">Selector de color personalizado para el fondo</label>
         <input type="color" id="customBgColor" value="#6a11cb" disabled />
       </section>
 
       <section class="control-group" aria-labelledby="group-apariencia">
-        <h2 id="group-apariencia">Apariencia</h2>
-        <label for="padding">Padding del fondo: <span id="paddingVal">64</span>px</label>
+        <h2 id="group-apariencia" data-i18n="section_appearance">Apariencia</h2>
+        <label for="padding"><span data-i18n="bg_padding_label">Padding del fondo:</span> <span id="paddingVal">64</span>px</label>
         <input type="range" id="padding" min="0" max="150" value="64"
                aria-valuemin="0" aria-valuemax="150" aria-valuenow="64" aria-valuetext="64 píxeles" />
 
-        <label for="radius">Radio del borde: <span id="radiusVal">12</span>px</label>
+        <label for="radius"><span data-i18n="border_radius_label">Radio del borde:</span> <span id="radiusVal">12</span>px</label>
         <input type="range" id="radius" min="0" max="40" value="12"
                aria-valuemin="0" aria-valuemax="40" aria-valuenow="12" aria-valuetext="12 píxeles" />
 
-        <label for="shadow">Intensidad de sombra: <span id="shadowVal">60</span>%</label>
+        <label for="shadow"><span data-i18n="shadow_label">Intensidad de sombra:</span> <span id="shadowVal">60</span>%</label>
         <input type="range" id="shadow" min="0" max="100" value="60"
                aria-valuemin="0" aria-valuemax="100" aria-valuenow="60" aria-valuetext="60 por ciento" />
 
         <label class="checkbox-label">
           <input type="checkbox" id="showWatermark" />
-          Marca de agua
+          <span data-i18n="watermark">Marca de agua</span>
         </label>
-        <label for="watermarkText" class="sr-only">Texto de la marca de agua</label>
-        <input type="text" id="watermarkText" value="Hecho con CodeShot" placeholder="Texto de la marca de agua" autocomplete="off" />
+        <label for="watermarkText" class="sr-only" data-i18n="watermark_text_aria">Texto de la marca de agua</label>
+        <input type="text" id="watermarkText" value="Hecho con CodeShot" placeholder="Texto de la marca de agua" data-i18n-placeholder="watermark_placeholder" autocomplete="off" />
       </section>
 
       <section class="control-group" aria-labelledby="group-brand-kit">
-        <h2 id="group-brand-kit">Brand Kit</h2>
-        <p class="hint-text" style="margin-top:0;font-size:11.5px">Guarda tu identidad visual y aplícala en un clic.</p>
+        <h2 id="group-brand-kit" data-i18n="section_brand_kit">Brand Kit</h2>
+        <p class="hint-text" style="margin-top:0;font-size:11.5px" data-i18n="vsc_brand_kit_hint">Guarda tu identidad visual y aplícala en un clic.</p>
         <div class="brand-kit-save-row">
-          <input type="text" id="brandKitNameInput" placeholder="Nombre del Brand Kit…" autocomplete="off" aria-label="Nombre del Brand Kit" />
-          <button id="saveBrandKitBtn" class="btn btn-secondary" type="button" style="width:auto;margin-top:0;padding:8px 12px">Guardar</button>
+          <input type="text" id="brandKitNameInput" placeholder="Nombre del Brand Kit…" data-i18n-placeholder="brand_kit_placeholder" autocomplete="off" aria-label="Nombre del Brand Kit" data-i18n-aria-label="brand_kit_name_aria" />
+          <button id="saveBrandKitBtn" class="btn btn-secondary" type="button" style="width:auto;margin-top:0;padding:8px 12px" data-i18n="save">Guardar</button>
         </div>
         <div id="brandKitList" class="brand-kit-list" aria-live="polite"></div>
       </section>
 
       <section class="control-group" aria-labelledby="group-exportacion">
-        <h2 id="group-exportacion">Exportación</h2>
+        <h2 id="group-exportacion" data-i18n="section_export">Exportación</h2>
 
-        <label for="exportFormat">Formato</label>
+        <label for="exportFormat" data-i18n="format_label">Formato</label>
         <select id="exportFormat">
-          <option value="png">PNG (transparencia)</option>
-          <option value="jpeg">JPEG (menor tamaño)</option>
-          <option value="webp">WEBP (óptimo para web)</option>
+          <option value="png" data-i18n="png_desc">PNG (transparencia)</option>
+          <option value="jpeg" data-i18n="jpeg_desc">JPEG (menor tamaño)</option>
+          <option value="webp" data-i18n="webp_desc">WEBP (óptimo para web)</option>
         </select>
 
         <div id="jpegQualityWrapper" style="display:none">
-          <label for="exportQuality">Calidad JPEG: <span id="exportQualityVal">90</span>%</label>
+          <label for="exportQuality"><span data-i18n="jpeg_quality_label"></span>Calidad JPEG:</span> <span id="exportQualityVal">90</span>%</label>
           <input type="range" id="exportQuality" min="50" max="100" value="90"
                  aria-valuemin="50" aria-valuemax="100" aria-valuenow="90" />
         </div>
 
         <fieldset class="scale-group">
-          <legend>Escala de exportación</legend>
+          <legend data-i18n="export_scale_legend">Escala de exportación</legend>
           <label class="scale-option"><input type="radio" name="exportScale" value="1" /> 1×</label>
-          <label class="scale-option"><input type="radio" name="exportScale" value="2" checked /> 2× (recomendado)</label>
+          <label class="scale-option"><input type="radio" name="exportScale" value="2" checked /> <span data-i18n="scale_recommended">2× (recomendado)</span></label>
           <label class="scale-option"><input type="radio" name="exportScale" value="3" /> 3×</label>
         </fieldset>
 
         <div class="export-preflight" aria-live="polite">
           <div class="preflight-heading">
-            <span>Preflight de exportación</span>
-            <span class="preflight-status"><i aria-hidden="true"></i> Listo</span>
+            <span data-i18n="preflight_title">Preflight de exportación</span>
+            <span class="preflight-status"><i aria-hidden="true"></i> <span data-i18n="preflight_ready">Listo</span></span>
           </div>
           <dl class="preflight-grid">
-            <div><dt>Formato</dt><dd id="preflightFormat">PNG</dd></div>
-            <div><dt>Escala</dt><dd id="preflightScale">2×</dd></div>
-            <div><dt>Resolución</dt><dd id="preflightDimensions">—</dd></div>
-            <div><dt>Peso estimado</dt><dd id="preflightSize">Calculando…</dd></div>
+            <div><dt data-i18n="preflight_format">Formato</dt><dd id="preflightFormat">PNG</dd></div>
+            <div><dt data-i18n="preflight_scale">Escala</dt><dd id="preflightScale">2×</dd></div>
+            <div><dt data-i18n="preflight_resolution">Resolución</dt><dd id="preflightDimensions">—</dd></div>
+            <div><dt data-i18n="preflight_size">Peso estimado</dt><dd id="preflightSize" data-i18n="preflight_calculating">Calculando…</dd></div>
           </dl>
-          <p id="preflightHint" class="preflight-hint">PNG conserva transparencia y máxima fidelidad.</p>
+          <p id="preflightHint" class="preflight-hint" data-i18n="preflight_hint_png">PNG conserva transparencia y máxima fidelidad.</p>
         </div>
 
         <button id="exportZipBtn" class="btn btn-secondary" type="button" style="margin-top:10px">
-          <span aria-hidden="true">🗜</span> Exportar ZIP (1×/2×/3×)
+          <span aria-hidden="true">🗜</span> <span data-i18n="export_zip">Exportar ZIP (1×/2×/3×)</span>
         </button>
       </section>
 
       <section class="control-group" aria-labelledby="group-historial">
-        <h2 id="group-historial">Historial reciente</h2>
+        <h2 id="group-historial" data-i18n="section_history">Historial reciente</h2>
         <div id="historyList" class="history-list"></div>
         <button id="clearHistoryBtn" class="btn btn-secondary" type="button" style="margin-top:0">
-          <span aria-hidden="true">🗑</span> Limpiar historial
+          <span aria-hidden="true">🗑</span> <span data-i18n="clear_history">Limpiar historial</span>
         </button>
       </section>
 
       <section class="control-group" aria-labelledby="group-presets">
-        <h2 id="group-presets">Presets de estilo</h2>
-        <p class="hint-text" style="margin-top:0;font-size:11.5px">Guarda la configuración actual con un nombre para reutilizarla.</p>
+        <h2 id="group-presets" data-i18n="section_presets">Presets de estilo</h2>
+        <p class="hint-text" style="margin-top:0;font-size:11.5px" data-i18n="presets_hint">Guarda la configuración actual con un nombre para reutilizarla.</p>
         <div class="preset-save-row">
-          <input type="text" id="presetNameInput" placeholder="Nombre del preset…" autocomplete="off" aria-label="Nombre del preset" />
+          <input type="text" id="presetNameInput" placeholder="Nombre del preset…" data-i18n-placeholder="preset_placeholder" autocomplete="off" aria-label="Nombre del preset" data-i18n-aria-label="preset_name_aria" />
           <button id="savePresetBtn" class="btn btn-secondary" type="button" style="width:auto;margin-top:0;padding:8px 12px">💾</button>
         </div>
         <div id="presetList" class="preset-list"></div>
       </section>
 
       <section class="control-group" aria-labelledby="group-acciones">
-        <h2 id="group-acciones">Acciones</h2>
-        <p class="hint-text" style="font-size:11.5px;margin-top:0">
+        <h2 id="group-acciones" data-i18n="section_actions">Acciones</h2>
+        <p class="hint-text" style="font-size:11.5px;margin-top:0" data-i18n-html="vsc_shortcuts_html">
           <span aria-hidden="true">⌨️</span>
           <strong>Ctrl+Enter</strong> descargar · <strong>Ctrl+Shift+C</strong> copiar · <strong>Ctrl+L</strong> limpiar
         </p>
         <button id="resetDefaultsBtn" class="btn btn-secondary" type="button">
-          <span aria-hidden="true">↺</span> Restaurar valores por defecto
+          <span aria-hidden="true">↺</span> <span data-i18n="reset_defaults">Restaurar valores por defecto</span>
         </button>
       </section>
 
     </aside>
 
-    <section class="preview-area" aria-label="Vista previa del código">
+    <section class="preview-area" aria-label="Vista previa del código" data-i18n-aria-label="preview_aria">
       <fieldset class="zoom-controls">
-        <legend class="sr-only">Controles de zoom de la vista previa</legend>
-        <button id="zoomOut" class="btn-icon" type="button" aria-label="Reducir zoom">−</button>
+        <legend class="sr-only" data-i18n="preview_controls_aria">Controles de zoom de la vista previa</legend>
+        <button id="zoomOut" class="btn-icon" type="button" aria-label="Reducir zoom" data-i18n-aria-label="zoom_out_aria">−</button>
         <span id="zoomVal" aria-live="polite">100%</span>
-        <button id="zoomIn" class="btn-icon" type="button" aria-label="Aumentar zoom">+</button>
+        <button id="zoomIn" class="btn-icon" type="button" aria-label="Aumentar zoom" data-i18n-aria-label="zoom_in_aria">+</button>
       </fieldset>
 
       <div class="stage-wrapper">
@@ -295,7 +296,7 @@
               <div id="lineNumbers" class="line-numbers-col" aria-hidden="true"></div>
               <div class="code-editor-wrapper">
                 <pre id="highlightPre" aria-hidden="true"><code id="highlightCode" class="language-javascript"></code></pre>
-                <label for="codeInput" class="sr-only">Editor de código: escribe o pega tu código aquí</label>
+                <label for="codeInput" class="sr-only" data-i18n="code_editor_aria">Editor de código: escribe o pega tu código aquí</label>
                 <textarea
                   id="codeInput"
                   class="code-input"
@@ -308,7 +309,7 @@
               </div>
             </div>
           </div>
-          <div id="watermark" class="watermark">Hecho con CodeShot</div>
+          <div id="watermark" class="watermark" data-i18n="watermark_default">Hecho con CodeShot</div>
         </div>
       </div>
     </section>
@@ -316,16 +317,17 @@
   </main>
 
   <dialog id="onboardingDialog" class="onboarding-dialog" aria-labelledby="onboardingTitle">
-    <p class="eyebrow">Primera captura</p>
-    <h2 id="onboardingTitle">¿Dónde vas a publicar?</h2>
-    <p>Elige un destino para aplicar un estilo recomendado.</p>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="lang-toggle-btn" type="button" aria-label="Idioma / Language" title="ES / EN" style="font-size:11px;font-weight:700;letter-spacing:.5px;padding:4px 8px;border-radius:6px;border:1px solid var(--border,#333);background:transparent;color:inherit;cursor:pointer">ES</button></div>
+    <p class="eyebrow" data-i18n="onboarding_vsc_eyebrow">Primera captura</p>
+    <h2 id="onboardingTitle" data-i18n="onboarding_title">¿Dónde vas a publicar?</h2>
+    <p data-i18n="onboarding_vsc_description">Elige un destino para aplicar un estilo recomendado.</p>
     <div id="onboardingDestinations" class="onboarding-destinations">
-      <button type="button" data-template="linkedin">LinkedIn <small>Post profesional</small></button>
-      <button type="button" data-template="github">GitHub <small>README o issue</small></button>
-      <button type="button" data-template="blog">Blog <small>Hero editorial</small></button>
-      <button type="button" data-template="slide">Presentación <small>Conference slide</small></button>
+      <button type="button" data-template="linkedin">LinkedIn <small data-i18n="template_linkedin_small">Post profesional</small></button>
+      <button type="button" data-template="github">GitHub <small data-i18n="template_github_small">README o issue</small></button>
+      <button type="button" data-template="blog">Blog <small data-i18n="template_blog_small">Hero editorial</small></button>
+      <button type="button" data-template="slide"><span data-i18n="template_slide_title">Presentaci&#243;n</span> <small data-i18n="template_slide_small">Conference slide</small></button>
     </div>
-    <button id="skipOnboardingBtn" class="onboarding-skip" type="button">Empezar desde cero</button>
+    <button id="skipOnboardingBtn" class="onboarding-skip" type="button" data-i18n="start_from_scratch">Empezar desde cero</button>
   </dialog>
 
   <script src="vendor/prism/prism.min.js"></script>
@@ -351,6 +353,7 @@
   <script src="vendor/prism/components/prism-yaml.min.js"></script>
   <script src="vendor/prism/components/prism-markdown.min.js"></script>
   <script src="vendor/html2canvas/html2canvas.min.js"></script>
+  <script src="i18n.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
